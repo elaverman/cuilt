@@ -2,12 +2,15 @@ package com.signalcollect.dcop.modules
 
 import scala.util.Random
 
+/**
+ * The module. Contains methods that are usually used by decision rules.
+ */
+
 trait DecisionRule extends Algorithm {
 
   // type UtilityType = Double
 
   def computeMove(c: State): Action
-  def shouldTerminate(c: State): Boolean
 
   def isInLocalOptimum(c: State): Boolean = {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
@@ -22,14 +25,11 @@ trait DecisionRule extends Algorithm {
     val currentUtility = expectedUtilities(c.centralVariableValue)
     maxUtility == currentUtility
   }
-
 }
 
-trait NashEquilibriumConvergence extends DecisionRule {
-
-  def shouldTerminate(c: State): Boolean = isInLocalOptimum(c)
-
-}
+/**
+ * Decision rule implementations
+ */
 
 trait ArgmaxADecisionRule extends DecisionRule {
 

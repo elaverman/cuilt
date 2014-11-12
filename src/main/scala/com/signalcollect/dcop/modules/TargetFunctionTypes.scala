@@ -1,5 +1,9 @@
 package com.signalcollect.dcop.modules
 
+/**
+ * Target function implementations.
+ */
+
 trait MemoryLessTargetFunction extends Algorithm {
 
   def computeCandidates(c: State) = {
@@ -15,6 +19,8 @@ trait MemoryLessTargetFunction extends Algorithm {
 
   override def updateMemory(c: State): State = c
 }
+
+
 
 trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction {
 

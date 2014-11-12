@@ -1,5 +1,9 @@
 package com.signalcollect.dcop.modules
 
+/**
+ * The module. Contains the must-haves for all the State types.
+ */
+
 trait StateTrait[AgentId, Action, SignalType, UtilityType] {
   def neighborhood: Map[AgentId, SignalType]
   def centralVariableValue: Action
@@ -12,9 +16,18 @@ trait StateTrait[AgentId, Action, SignalType, UtilityType] {
   def withUpdatedMemory(newMemory: Map[Action, UtilityType]): this.type
 }
 
-case class SimpleState[AgentId, Action, SignalType, UtilityType](neighborhood: Map[AgentId, SignalType], centralVariableValue: Action, centralVariableAssignment: (AgentId, Action), memory: Map[Action, UtilityType],
+/**
+ * State implementations.
+ */
+
+case class SimpleState[AgentId, Action, SignalType, UtilityType](
+  neighborhood: Map[AgentId, SignalType],
+  centralVariableValue: Action,
+  centralVariableAssignment: (AgentId, Action),
+  memory: Map[Action, UtilityType],
   numberOfCollects: Long,
   domain: Set[Action]) extends StateTrait[AgentId, Action, SignalType, UtilityType] {
+
   def withCentralVariableAssignment(value: Action) = {
     this.copy(centralVariableAssignment = (centralVariableAssignment._1, value)).asInstanceOf[this.type]
   }
@@ -25,7 +38,14 @@ case class SimpleState[AgentId, Action, SignalType, UtilityType](neighborhood: M
     this.copy(memory = newMemory).asInstanceOf[this.type]
   }
 }
-case class RankedState[AgentId, Action, SignalType, UtilityType](neighborhood: Map[AgentId, SignalType], centralVariableValue: Action, ranks: Map[AgentId, Double], centralVariableAssignment: (AgentId, Action), memory: Map[Action, UtilityType],
+
+
+case class RankedState[AgentId, Action, SignalType, UtilityType](
+  neighborhood: Map[AgentId, SignalType],
+  centralVariableValue: Action,
+  centralVariableAssignment: (AgentId, Action),
+  memory: Map[Action, UtilityType],
+  ranks: Map[AgentId, Double],
   numberOfCollects: Long,
   domain: Set[Action]) extends StateTrait[AgentId, Action, SignalType, UtilityType] {
   def withCentralVariableAssignment(value: Action) = {

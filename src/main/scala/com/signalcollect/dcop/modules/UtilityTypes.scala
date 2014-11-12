@@ -1,5 +1,10 @@
 package com.signalcollect.dcop.modules
 
+
+/**
+ * Utility function implementations.
+ */
+
 trait VertexColoringUtility extends Algorithm {
 
   //type UtilityType = Double

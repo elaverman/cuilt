@@ -26,6 +26,7 @@ import com.signalcollect.dcop.impl.SimpleConfig
 class SimpleDcopEdge[Id](targetId: Id) extends DefaultEdge(targetId) {
   type Source = SimpleDcopVertex[_, _, _, _, _]
 
+  //It should return the centralVariableAssignment
   def signal = {
     val sourceState = source.state
     ???

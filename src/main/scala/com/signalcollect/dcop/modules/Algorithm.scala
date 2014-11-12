@@ -12,14 +12,14 @@ trait Algorithm extends Serializable {
 
   def computeMove(c: State): Action //decision rule
 
-  def shouldTerminate(c: State): Boolean //decision rule
-
   def isInLocalOptimum(c: State): Boolean //decision rule
+
+  def shouldTerminate(c: State): Boolean //termination rule
 
   def updateMemory(c: State): State //target function
 
-  def computeUtility(c: State): UtilityType //utility
-
   def computeExpectedUtilities(c: State): Map[Action, UtilityType] //target function
+
+  def computeUtility(c: State): UtilityType //utility
 
 }
