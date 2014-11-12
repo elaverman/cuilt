@@ -36,12 +36,7 @@ abstract class DcopVertex[VertexId, VertexState <: StateTrait[VertexId, VertexAc
   }
 
   def collect = {
-    val signalMap = mostRecentSignalMap.toMap
-    //signalMap.asInstanceOf[Map[Id, Signal]]
-    //val neighborhoodUpdated = state.withUpdatedNeighborhood(Map.empty[VertexId, Signal].asInstanceOf[Map[VertexId, VertexSignalType]])
-    val neighborhoodUpdated = state.withUpdatedNeighborhood(signalMap.asInstanceOf[Map[VertexId, VertexSignalType]])
-    val c = algorithm.updateMemory(neighborhoodUpdated)
-    // val c = currentConfig
+    val c = updatedState
     if (algorithm.shouldConsiderMove(c)) {
       changeMove(c)
     } else {
@@ -56,11 +51,21 @@ abstract class DcopVertex[VertexId, VertexState <: StateTrait[VertexId, VertexAc
     }
   }
 
+  /*
+   * Updates state with the new received signals. Could be overriden depending on the state type. 
+   */
+  def updatedState: VertexState = {
+    val signalMap = mostRecentSignalMap.toMap
+    //signalMap.asInstanceOf[Map[Id, Signal]]
+    //val neighborhoodUpdated = state.withUpdatedNeighborhood(Map.empty[VertexId, Signal].asInstanceOf[Map[VertexId, VertexSignalType]])
+    val neighborhoodUpdated = state.withUpdatedNeighborhood(signalMap.asInstanceOf[Map[VertexId, VertexSignalType]])
+    val c = algorithm.updateMemory(neighborhoodUpdated)
+    c
+  }
+
   def isConverged(c: VertexState): Boolean = {
     algorithm.shouldTerminate(c)
   }
-
-  //def currentState: VertexState
 
   def isStateUnchanged(oldState: VertexState, newState: VertexState): Boolean = {
     oldState.centralVariableAssignment == newState.centralVariableAssignment &&

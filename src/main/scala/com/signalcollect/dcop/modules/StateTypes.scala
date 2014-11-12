@@ -51,6 +51,7 @@ case class RankedState[AgentId, Action, SignalType, UtilityType](
   def withCentralVariableAssignment(value: Action) = {
     this.copy(centralVariableAssignment = (centralVariableAssignment._1, value)).asInstanceOf[this.type]
   }
+  //TODO: Should we also update and calculate the ranks here?
   def withUpdatedNeighborhood(newNeighborhood: Map[AgentId, SignalType]) = {
     this.copy(neighborhood = newNeighborhood).asInstanceOf[this.type]
   }
