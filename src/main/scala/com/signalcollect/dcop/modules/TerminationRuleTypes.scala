@@ -2,7 +2,8 @@ package com.signalcollect.dcop.modules
 
 
 /**
- * Termination rule implementations.
+ * Termination rule implementations. 
+ * Should contain implementations for the shouldTerminate method.
  */
 
 trait NashEquilibriumConvergence extends DecisionRule {

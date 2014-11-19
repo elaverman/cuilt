@@ -2,6 +2,7 @@ package com.signalcollect.dcop.modules
 
 /**
  * Target function implementations.
+ * Should contain implementations for the functions: updateMemory and computeExpectedUtilities
  */
 
 trait MemoryLessTargetFunction extends Algorithm {

@@ -3,6 +3,7 @@ package com.signalcollect.dcop.modules
 
 /**
  * Utility function implementations.
+ * Should contain implementations for the method computeUtility.
  */
 
 trait VertexColoringUtility extends Algorithm {
