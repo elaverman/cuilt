@@ -11,7 +11,7 @@ trait VertexColoringUtility extends Algorithm {
   //type UtilityType = Double
 
   def computeUtility(c: State) = {
-    val occupiedColors = c.neighborhood.values
+    val occupiedColors = c.neighborActions.values
     val numberOfConflicts = occupiedColors.filter(_ == c.centralVariableValue).size
     val numberOfNeighbors = occupiedColors.size
     val neighborsInSync = numberOfNeighbors - numberOfConflicts

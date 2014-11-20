@@ -10,6 +10,7 @@ trait Algorithm extends Serializable {
 
   type AgentId
   type Action
+  type NeighborMetadata //Ranks etc. 
   type SignalType
   type UtilityType = Double
   type State <: StateInterface
@@ -19,17 +20,43 @@ trait Algorithm extends Serializable {
    * Standard implementations can be mixed in from SimpleState and RankedState.
    */
   trait StateInterface {
-    def neighborhood: Map[AgentId, SignalType]
+    def agentId: AgentId
     def centralVariableValue: Action
-    def centralVariableAssignment: (AgentId, Action)
-    def memory: Map[Action, UtilityType]
-    def numberOfCollects: Long //TODO: Rename to number of updates and verify it is = no of collects
     def domain: Set[Action]
+    def neighborActions: Map[AgentId, Action]
+
     def withCentralVariableAssignment(value: Action): this.type
-    def withUpdatedNeighborhood(newNeighborhood: Map[AgentId, SignalType]): this.type
-    def withUpdatedMemory(newMemory: Map[Action, UtilityType]): this.type
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]): this.type
+
+    def updateNeighbourhood(n: Map[AgentId, Any]): this.type = {
+      var metadataEncountered = false
+      //TODO: turn this into functional code with n.unzip
+      val actionMap = n.map {
+        case (key, value) =>
+          value match {
+            case action: Action => (key, action)
+            case (action: Action, metadata: NeighborMetadata) =>
+              metadataEncountered = true
+              (key, action)
+            case other => throw new Exception(s"blah blah state could not handle sifgnal blah")
+          }
+      }
+
+//      if (metadataEncountered) {
+//        val metadataMap = n.map {
+//          case (key, value) =>
+//            value match {
+//              case (action, metadata: NeighborMetadata) => (key, metadata)
+//            }
+//        }
+//      }
+      this.withUpdatedNeighborActions(actionMap)
+      
+      
+    }
+
   }
-  
+
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
 
   def createInitialState(action: Action, domain: Set[Action]): State

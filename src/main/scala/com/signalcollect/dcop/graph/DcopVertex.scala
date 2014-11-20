@@ -56,7 +56,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
       val signalMap = mostRecentSignalMap.toMap
       //signalMap.asInstanceOf[Map[Id, Signal]]
       //val neighborhoodUpdated = state.withUpdatedNeighborhood(Map.empty[VertexId, Signal].asInstanceOf[Map[VertexId, VertexSignalType]])
-      val neighborhoodUpdated = state.withUpdatedNeighborhood(signalMap.asInstanceOf[Map[AgentId, SignalType]])
+      val neighborhoodUpdated = state.updateNeighbourhood(signalMap.asInstanceOf[Map[AgentId, SignalType]])
       val c = updateMemory(neighborhoodUpdated)
       c
     }
@@ -66,8 +66,8 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
     }
 
     def isStateUnchanged(oldState: State, newState: State): Boolean = {
-      oldState.centralVariableAssignment == newState.centralVariableAssignment &&
-        oldState.neighborhood == newState.neighborhood
+        oldState.centralVariableValue == newState.centralVariableValue &&
+        oldState.neighborActions == newState.neighborActions
     }
 
     override def scoreSignal: Double = {

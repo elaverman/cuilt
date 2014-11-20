@@ -20,7 +20,7 @@ trait RankedBasedAdjustmentSchedule extends RankedState {
 
   def shouldConsiderMove(c: State) = {
     val maxNeighbourRank = c.ranks.values.max
-    val rankForCurrentConfig = c.ranks(c.centralVariableAssignment._1)
+    val rankForCurrentConfig = c.ranks(c.agentId)
     val relativeRankRatio = rankForCurrentConfig / maxNeighbourRank
     val changeProbability = 1 - relativeRankRatio * relativeChangeProbability // The higher the rank ratio, the lower the probability to change.
     Random.nextDouble <= changeProbability

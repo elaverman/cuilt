@@ -21,9 +21,7 @@ trait MemoryLessTargetFunction extends Algorithm {
   override def updateMemory(c: State): State = c
 }
 
-
-
-trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction {
+trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
 
   override def computeExpectedUtilities(conf: State) = {
     val configUtilities = computeCandidates(conf).map(c =>
@@ -31,7 +29,7 @@ trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction {
     configUtilities
   }
 
-  override def updateMemory(c: State) = {
+  override def updateMemory(c: State): State = {
     val newMemory = computeExpectedUtilities(c)
     c.withUpdatedMemory(newMemory)
   }
