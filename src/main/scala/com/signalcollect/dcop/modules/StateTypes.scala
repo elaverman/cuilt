@@ -62,6 +62,36 @@ trait StateWithRank extends Algorithm {
     def neighborMetadata: Map[AgentId, NeighborMetadata]
     def withUpdatedNeighborMetadata(newNeighborMetadata: Map[AgentId, NeighborMetadata]): this.type
     def ranks: Map[AgentId, Double]
+
+    override def updateNeighbourhood(n: Map[AgentId, Any]): this.type = {
+      var metadataEncountered = false
+      //TODO: turn this into functional code with n.unzip
+      val actionMap = n.map {
+        case (key, value) =>
+          value match {
+            //TODO Problem with type erasure!
+            case action: Action => (key, action)
+            case (action: Action, metadata: NeighborMetadata) =>
+              metadataEncountered = true
+              (key, action)
+            case other => throw new Exception(s"blah blah state could not handle sifgnal blah")
+          }
+      }
+      val updatedWithActions = this.withUpdatedNeighborActions(actionMap)
+
+      if (metadataEncountered) {
+        val metadataMap = n.map {
+          case (key, value) =>
+            value match {
+              case (action, metadata: NeighborMetadata) => (key, metadata)
+            }
+        }.asInstanceOf[Map[AgentId, NeighborMetadata]]
+        updatedWithActions.withUpdatedNeighborMetadata(metadataMap)
+      } else {
+        updatedWithActions
+      }
+
+    }
   }
 }
 
@@ -86,6 +116,7 @@ trait RankedState extends StateWithRank {
       this.copy(neighborMetadata = newNeighborMetadata).asInstanceOf[this.type]
     }
     def ranks = neighborMetadata
+
   }
 }
 

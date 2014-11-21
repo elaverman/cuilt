@@ -34,6 +34,7 @@ trait Algorithm extends Serializable {
       val actionMap = n.map {
         case (key, value) =>
           value match {
+            //TODO investigate warning
             case action: Action => (key, action)
             case (action: Action, metadata: NeighborMetadata) =>
               metadataEncountered = true

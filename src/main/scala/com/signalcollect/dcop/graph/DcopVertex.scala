@@ -6,8 +6,12 @@ import com.signalcollect.Vertex
 
 trait SignalCollectAlgorithmBridge extends Algorithm {
   
-  def createVertex(id: AgentId, initialState: State): Vertex[AgentId, State, Any, Any] = {
-    new DcopVertex(id, initialState, false)
+  def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] = {
+    new DcopVertex(id, createInitialState(initialAction, domain), false)
+  }
+  
+  def createInitialState(initialAction: Action, domain: Set[Action]): State = {
+    ???
   }
 
   /**
