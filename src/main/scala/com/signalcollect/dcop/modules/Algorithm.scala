@@ -27,7 +27,7 @@ trait Algorithm extends Serializable {
 
     def withCentralVariableAssignment(value: Action): this.type
     def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]): this.type
-
+    
     def updateNeighbourhood(n: Map[AgentId, Any]): this.type = {
       var metadataEncountered = false
       //TODO: turn this into functional code with n.unzip
@@ -60,7 +60,7 @@ trait Algorithm extends Serializable {
 
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
 
-  def createInitialState(action: Action, domain: Set[Action]): State
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State //state
 
   def shouldConsiderMove(c: State): Boolean //adjustment schedule
 

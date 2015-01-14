@@ -1,17 +1,18 @@
 package com.signalcollect.dcop.graph
 
 import com.signalcollect.dcop.modules.Algorithm
+import com.signalcollect._
 import com.signalcollect.DataGraphVertex
 import com.signalcollect.Vertex
 
 trait SignalCollectAlgorithmBridge extends Algorithm {
-  
+
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] = {
-    new DcopVertex(id, createInitialState(initialAction, domain), false)
+    new DcopVertex(id, createInitialState(id, initialAction, domain), false)
   }
-  
-  def createInitialState(initialAction: Action, domain: Set[Action]): State = {
-    ???
+
+  def createEdge(targetId: AgentId) = {
+    new DcopEdge(targetId)
   }
 
   /**
@@ -70,7 +71,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
     }
 
     def isStateUnchanged(oldState: State, newState: State): Boolean = {
-        oldState.centralVariableValue == newState.centralVariableValue &&
+      oldState.centralVariableValue == newState.centralVariableValue &&
         oldState.neighborActions == newState.neighborActions
     }
 
@@ -92,4 +93,14 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
       }
     }
   }
+
+  class DcopEdge(targetId: AgentId) extends DefaultEdge[AgentId](targetId) {
+    type Source = DcopVertex
+
+    def signal = {
+      val sourceState = source.state
+      sourceState.centralVariableValue
+    }
+  }
+
 }

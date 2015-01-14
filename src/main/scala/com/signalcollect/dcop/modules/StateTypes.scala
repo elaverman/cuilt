@@ -6,6 +6,14 @@ package com.signalcollect.dcop.modules
 trait SimpleState extends Algorithm {
   type State = SimpleStateImplementation
 
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head))
+  }
+
   case class SimpleStateImplementation(
     agentId: AgentId,
     centralVariableValue: Action,
@@ -33,6 +41,16 @@ trait StateWithMemory extends Algorithm {
 
 trait SimpleMemoryState extends StateWithMemory {
   type State = SimpleMemoryStateImplementation
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleMemoryStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[Action, Double].withDefaultValue(0.0),
+      numberOfCollects = 0)
+  }
 
   case class SimpleMemoryStateImplementation(
     agentId: AgentId,
@@ -98,6 +116,15 @@ trait StateWithRank extends Algorithm {
 trait RankedState extends StateWithRank {
   type State = RankedStateImplementation
   type NeighborMetadata = Double
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    RankedStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      neighborMetadata = Map.empty[AgentId, NeighborMetadata])
+  }
 
   case class RankedStateImplementation(
     agentId: AgentId,
