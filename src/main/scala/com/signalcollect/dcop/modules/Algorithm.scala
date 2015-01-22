@@ -27,7 +27,7 @@ trait Algorithm extends Serializable {
 
     def withCentralVariableAssignment(value: Action): this.type
     def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]): this.type
-    
+
     def updateNeighbourhood(n: Map[AgentId, Any]): this.type = {
       var metadataEncountered = false
       //TODO: turn this into functional code with n.unzip
@@ -43,23 +43,24 @@ trait Algorithm extends Serializable {
           }
       }
 
-//      if (metadataEncountered) {
-//        val metadataMap = n.map {
-//          case (key, value) =>
-//            value match {
-//              case (action, metadata: NeighborMetadata) => (key, metadata)
-//            }
-//        }
-//      }
+      //      if (metadataEncountered) {
+      //        val metadataMap = n.map {
+      //          case (key, value) =>
+      //            value match {
+      //              case (action, metadata: NeighborMetadata) => (key, metadata)
+      //            }
+      //        }
+      //      }
       this.withUpdatedNeighborActions(actionMap)
-      
-      
+
     }
 
   }
 
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
 
+  //TODO: Shouldn't we also require createEdge from the bridge?
+  
   def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State //state
 
   def shouldConsiderMove(c: State): Boolean //adjustment schedule
@@ -76,4 +77,9 @@ trait Algorithm extends Serializable {
 
   def computeUtility(c: State): UtilityType //utility
 
+}
+
+trait IntAlgorithm extends Algorithm {
+  type Action = Int
+  type AgentId = Int
 }

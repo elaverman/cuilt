@@ -29,16 +29,17 @@ object Test extends App {
   println("bye")
 }
 
-object VertexColoringAlgorithm extends Algorithm
+
+
+object VertexColoringAlgorithm extends IntAlgorithm
   with SimpleState
   with VertexColoringUtility
-  with FloodAdjustmentSchedule
+  with ParallelRandomAdjustmentSchedule
   with ArgmaxADecisionRule
   with NashEquilibriumConvergence
   with MemoryLessTargetFunction
   with SignalCollectAlgorithmBridge {
-  type Action = Int
-  type AgentId = Int
+  def changeProbability = 0.7
 }
 
 object RankedVertexColoringAlgorithm extends Algorithm with RankedState
