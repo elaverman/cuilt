@@ -10,6 +10,19 @@ trait FloodAdjustmentSchedule extends Algorithm {
 }
 
 /**
+ * Vertices update with a certain probability
+ */
+trait ParallelRandomAdjustmentSchedule extends Algorithm {
+  
+  def changeProbability: Double
+  
+  def shouldConsiderMove(c: State) = {
+    Random.nextDouble <= changeProbability
+  }
+}
+
+
+/**
  * Agents/vertices update with inertia depending on their rank relative to their maximum-ranked neighbour.
  */
 trait RankedBasedAdjustmentSchedule extends RankedState {
