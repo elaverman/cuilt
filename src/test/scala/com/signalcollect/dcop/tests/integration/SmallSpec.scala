@@ -124,7 +124,7 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
         runId += 1
         var res = false
         val myAlgo = VertexColoringAlgorithm
-        val gb = new GridBuilder(myAlgo, width, (0 until 8).toSet)
+        val gb = new GridBuilder(myAlgo, width, (0 to 8).toSet)
         val g = gb.build()
         try {
 
