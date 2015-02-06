@@ -5,8 +5,9 @@ import com.signalcollect.dcop.modules._
 import com.signalcollect._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.dcop.modules.SignalCollectAlgorithmBridge
 
-class GridBuilder(myAlgo: IntAlgorithm with SignalCollectAlgorithmBridge, gridWidth: Int, domain: Set[Int]) {
+class GridBuilder(myAlgo: IntAlgorithm, gridWidth: Int, domain: Set[Int]) {
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {
 
