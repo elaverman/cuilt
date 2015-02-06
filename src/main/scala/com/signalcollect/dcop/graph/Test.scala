@@ -3,6 +3,7 @@ package com.signalcollect.dcop.graph
 import com.signalcollect.dcop.modules._
 import com.signalcollect._
 import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.dcop.modules.SignalCollectAlgorithmBridge
 
 object Test extends App {
 

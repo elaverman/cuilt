@@ -1,8 +1,6 @@
-package com.signalcollect.dcop.graph
+package com.signalcollect.dcop.modules
 
-import com.signalcollect.dcop.modules.Algorithm
 import com.signalcollect._
-import com.signalcollect.DataGraphVertex
 import com.signalcollect.Vertex
 
 trait SignalCollectAlgorithmBridge extends Algorithm {
