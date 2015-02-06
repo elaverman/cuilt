@@ -2,17 +2,21 @@ package com.signalcollect.dcop.modules
 
 import scala.util.Random
 
+trait AdjustmentSchedule extends Algorithm {
+  def shouldConsiderMove(c: State): Boolean 
+}
+
 /**
  * All vertices/agents update every time.
  */
-trait FloodAdjustmentSchedule extends Algorithm {
+trait FloodAdjustmentSchedule extends AdjustmentSchedule {
   def shouldConsiderMove(c: State) = true
 }
 
 /**
  * Vertices update with a certain probability
  */
-trait ParallelRandomAdjustmentSchedule extends Algorithm {
+trait ParallelRandomAdjustmentSchedule extends AdjustmentSchedule {
   
   def changeProbability: Double
   
@@ -25,7 +29,7 @@ trait ParallelRandomAdjustmentSchedule extends Algorithm {
 /**
  * Agents/vertices update with inertia depending on their rank relative to their maximum-ranked neighbour.
  */
-trait RankedBasedAdjustmentSchedule extends RankedState {
+trait RankedBasedAdjustmentSchedule extends AdjustmentSchedule with RankedState {
 
   //override type State = RankedState[AgentId, Action, SignalType, UtilityType]
 

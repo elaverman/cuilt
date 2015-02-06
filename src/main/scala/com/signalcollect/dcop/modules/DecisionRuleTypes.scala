@@ -48,3 +48,26 @@ trait ArgmaxADecisionRule extends DecisionRule {
   }
 
 }
+
+trait ArgmaxBDecisionRule extends DecisionRule {
+
+  def computeMove(c: State) = {
+    val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+    val maxUtility = expectedUtilities.values.max
+    val maxUtilityMoves: Seq[Action] = expectedUtilities.filter(_._2 == maxUtility).map(_._1).toSeq
+    val numberOfMaxUtilityMoves = maxUtilityMoves.size
+
+    //If we are converged already don't stir the boat
+    // Attention! If isConverged no longer depends on the utility so 
+    // the maxUtility move may not be the current move anymore...
+    if ((isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)) &&
+      (maxUtilityMoves.contains(c.centralVariableValue)) &&
+      (c.computeExpectedNumberOfConflicts == 0)) {
+      c.centralVariableValue
+    } else {
+      val chosenMaxUtilityMove = maxUtilityMoves(Random.nextInt(maxUtilityMoves.size))
+      chosenMaxUtilityMove
+    }
+  }
+
+}

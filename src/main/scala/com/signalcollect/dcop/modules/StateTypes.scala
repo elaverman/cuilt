@@ -3,7 +3,58 @@ package com.signalcollect.dcop.modules
 /**
  * State implementations.
  */
-trait SimpleState extends Algorithm {
+
+trait StateModule extends Algorithm {
+  type State <: StateInterface
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State
+  
+  trait StateInterface extends StateType {
+    def agentId: AgentId
+    def centralVariableValue: Action
+    def domain: Set[Action]
+    def neighborActions: Map[AgentId, Action]
+
+    def withCentralVariableAssignment(value: Action): this.type
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]): this.type
+
+    //TODO: Used for ArgmaxB decision rule and for ZeroConflictConvergenceDetection.
+    def computeExpectedNumberOfConflicts = {
+      val occupiedColors = neighborActions.values
+      val numberOfConflicts = occupiedColors.filter(_ == centralVariableValue).size
+      numberOfConflicts
+    }
+
+    def updateNeighbourhood(n: Map[AgentId, Any]): this.type = {
+      var metadataEncountered = false
+      //TODO: turn this into functional code with n.unzip
+      val actionMap = n.map {
+        case (key, value) =>
+          value match {
+            //TODO investigate warning
+            case action: Action => (key, action)
+            case (action: Action, metadata: NeighborMetadata) =>
+              metadataEncountered = true
+              (key, action)
+            case other => throw new Exception(s"blah blah state could not handle sifgnal blah")
+          }
+      }
+
+      //      if (metadataEncountered) {
+      //        val metadataMap = n.map {
+      //          case (key, value) =>
+      //            value match {
+      //              case (action, metadata: NeighborMetadata) => (key, metadata)
+      //            }
+      //        }
+      //      }
+      this.withUpdatedNeighborActions(actionMap)
+
+    }
+  }
+}
+
+trait SimpleState extends StateModule {
   type State = SimpleStateImplementation
 
   def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
@@ -29,7 +80,7 @@ trait SimpleState extends Algorithm {
   }
 }
 
-trait StateWithMemory extends Algorithm {
+trait StateWithMemory extends StateModule {
   type State <: StateWithMemoryInterface
 
   trait StateWithMemoryInterface extends StateInterface {
@@ -73,7 +124,7 @@ trait SimpleMemoryState extends StateWithMemory {
   }
 }
 
-trait StateWithRank extends Algorithm {
+trait StateWithRank extends StateModule {
   type State <: StateWithRankInterface
 
   trait StateWithRankInterface extends StateInterface {

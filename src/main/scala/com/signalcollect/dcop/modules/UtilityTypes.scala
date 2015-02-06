@@ -6,9 +6,15 @@ package com.signalcollect.dcop.modules
  * Should contain implementations for the method computeUtility.
  */
 
+trait Utility extends Algorithm {
+
+  def computeUtility(c: State): UtilityType
+}
+
+
 trait VertexColoringUtility extends Algorithm {
 
-  //type UtilityType = Double
+  type UtilityType = Double
 
   def computeUtility(c: State) = {
     val occupiedColors = c.neighborActions.values
