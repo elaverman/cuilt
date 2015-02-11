@@ -14,7 +14,7 @@ trait Utility extends Algorithm {
 
 trait VertexColoringUtility extends Algorithm {
 
-  type UtilityType = Double
+  //type UtilityType = Double
 
   def computeUtility(c: State) = {
     val occupiedColors = c.neighborActions.values

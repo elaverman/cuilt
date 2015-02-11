@@ -61,11 +61,11 @@ object DcopEvaluation extends App {
   def pure = true
 //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)//.addResultHandler(googleDocs) //.addResultHandler(mySql)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??
-  val simpleOptimizers: List[IntAlgorithm] = List(
+  val simpleOptimizers: List[IntAlgorithm with Execution] = List(
     VertexColoringAlgorithm)
 
   //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
@@ -141,10 +141,10 @@ object DcopEvaluation extends App {
         for (em <- List(ExecutionMode.Synchronous, ExecutionMode.OptimizedAsynchronous)) {
           for (myOptimizer <- simpleOptimizers) {
 
-          val myGrid = new GridBuilder(myOptimizer, gridWidth, domain= Set(numberOfColors))
+          val myGrid = new GridBuilder(myOptimizer, gridWidth, domain= (0 until numberOfColors).toSet)
 
-          evaluation = evaluation.addEvaluationRun(DcopAlgorithmRun(
-            optimizer = myOptimizer, //TODO: redundant. take from grid?? 
+          evaluation = evaluation.addEvaluationRun(myOptimizer.DcopAlgorithmRun(
+            //optimizer = myOptimizer, //TODO: redundant. take from grid?? 
             graphInstantiator = myGrid,
             maxUtility = myGrid.maxUtility,
             domainSize = numberOfColors,

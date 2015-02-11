@@ -9,232 +9,234 @@ import com.signalcollect.dcop.graph._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.interfaces.ModularAggregationOperation
 
-/*
+trait Execution extends SignalCollectAlgorithmBridge {
+
+  /*
  * Returns true iff for each vertex,  there is no state with better expected utility than the current one.
  */
-object LocalOptimumDetector extends ModularAggregationOperation[Boolean] with SignalCollectAlgorithmBridge{
+  object LocalOptimumDetector extends ModularAggregationOperation[Boolean] {
 
-  def extract(v: Vertex[_, _, _, _]) = v match {
-    //TODO: Investigate the change here
-    case v: DcopVertex => this.isInLocalOptimum(v.state)
-    case other => throw new Exception("This detector can only handle Dcop vertices.")
+    def extract(v: Vertex[_, _, _, _]) = v match {
+      //TODO: Investigate the change here
+      case v: DcopVertex => isInLocalOptimum(v.state)
+      case other => throw new Exception("This detector can only handle Dcop vertices.")
+    }
+
+    override def aggregate(a: Boolean, b: Boolean) = a && b
+
+    override val neutralElement = true
+
   }
 
-  override def aggregate(a: Boolean, b: Boolean) = a && b
-
-  override val neutralElement = true
-
-}
-
-/*
+  /*
  * Returns the number of vertices for which there is no state with better expected utility than the current one.
  */
-object NumberOfLocalOptimaCounter extends ModularAggregationOperation[Long] with SignalCollectAlgorithmBridge{
+  object NumberOfLocalOptimaCounter extends ModularAggregationOperation[Long] {
 
-  def extract(v: Vertex[_, _, _, _]) = v match {
-    //TODO: Check next line
-    case v: DcopVertex => if (this.isInLocalOptimum(v.state)) 1 else 0
-    case other => throw new Exception("This detector can only handle Dcop vertices.")
+    def extract(v: Vertex[_, _, _, _]) = v match {
+      //TODO: Check next line
+      case v: DcopVertex => if (isInLocalOptimum(v.state)) 1 else 0
+      case other => throw new Exception("This detector can only handle Dcop vertices.")
+    }
+
+    override def aggregate(a: Long, b: Long) = a + b
+
+    override val neutralElement = 0l
+
   }
 
-  override def aggregate(a: Long, b: Long) = a + b
-
-  override val neutralElement = 0l
-
-}
-
-/*
+  /*
  * Returns a set with all the actions chosen by each vertex.
  * Very expensive. Do NOT use on large graphs!
  */
-object ActionDetector extends ModularAggregationOperation[Set[(Int, Int)]] with SignalCollectAlgorithmBridge {
+  object ActionDetector extends ModularAggregationOperation[Set[(Int, Int)]] {
 
-  def extract(v: Vertex[_, _, _, _]) = v match {
-    case v: DcopVertex =>
-      //TODO: Check next line
-      val assignment = (v.state.agentId, v.state.centralVariableValue)
-      assignment match {
-        case (t1: Int, t2: Int) => Set((t1, t2))
-        case other => throw new Exception("Can only handle vertices with int Ids and int Actions.")
-      }
-    case other => throw new Exception("This detector can only handle Dcop vertices.")
+    def extract(v: Vertex[_, _, _, _]) = v match {
+      case v: DcopVertex =>
+        //TODO: Check next line
+        val assignment = (v.state.agentId, v.state.centralVariableValue)
+        assignment match {
+          case (t1: Int, t2: Int) => Set((t1, t2))
+          case other => throw new Exception("Can only handle vertices with int Ids and int Actions.")
+        }
+      case other => throw new Exception("This detector can only handle Dcop vertices.")
+    }
+
+    override def aggregate(a: Set[(Int, Int)], b: Set[(Int, Int)]) = a union b
+
+    override val neutralElement = Set.empty[(Int, Int)]
+
   }
 
-  override def aggregate(a: Set[(Int, Int)], b: Set[(Int, Int)]) = a union b
-
-  override val neutralElement = Set.empty[(Int, Int)]
-
-}
-
-/*
+  /*
  * Returns the total number of conflicts.
  */
-object NumberOfConflictsCounter extends ModularAggregationOperation[Long] with SignalCollectAlgorithmBridge{
+  object NumberOfConflictsCounter extends ModularAggregationOperation[Long] {
+    def extract(v: Vertex[_, _, _, _]) = v match {
+      //TODO: Check next line
+      case v: DcopVertex => v.state.computeExpectedNumberOfConflicts
+      case other => throw new Exception("This counter can only handle Dcop vertices.")
+    }
 
-  def extract(v: Vertex[_, _, _, _]) = v match {
-    //TODO: Check next line
-    case v: DcopVertex => v.state.computeExpectedNumberOfConflicts
-    case other => throw new Exception("This counter can only handle Dcop vertices.")
+    override def aggregate(a: Long, b: Long) = a + b
+
+    override val neutralElement = 0l
   }
 
-  override def aggregate(a: Long, b: Long) = a + b
+  /**
+   *  GlobalTerminationDetection defines a shouldTerminate function that determines if a computation should terminate.
+   *  Usually this will be determined by running an aggregation operation on the graph.
+   *
+   *  @param aggregationInterval In a synchronous computation: aggregation interval in computation steps.
+   *  						   In an asynchronous computation: aggregation interval in milliseconds
+   *  @param shouldTerminate Function that takes the graph as a parameter and returns true iff the computation should
+   *               be terminated.
+   */
+  class DcopStatsGatherer extends GlobalTerminationDetection[Any, Any] {
+    override def aggregationInterval = 1
+    override def shouldTerminate(g: Graph[Any, Any]) = {
+      //    val isInLocalOptimum = g.aggregate(LocalOptimumDetector)
+      //    val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
+      val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
 
-  override val neutralElement = 0l
-}
-
-/**
- *  GlobalTerminationDetection defines a shouldTerminate function that determines if a computation should terminate.
- *  Usually this will be determined by running an aggregation operation on the graph.
- *
- *  @param aggregationInterval In a synchronous computation: aggregation interval in computation steps.
- *  						   In an asynchronous computation: aggregation interval in milliseconds
- *  @param shouldTerminate Function that takes the graph as a parameter and returns true iff the computation should
- *               be terminated.
- */
-class DcopStatsGatherer extends GlobalTerminationDetection[Any, Any] {
-  override def aggregationInterval = 1
-  override def shouldTerminate(g: Graph[Any, Any]) = {
-    //    val isInLocalOptimum = g.aggregate(LocalOptimumDetector)
-    //    val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
-    val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
-
-    false
-  }
-}
-
-class DcopStatsGathererWithHistory(
-  conflictsHistory: collection.mutable.Map[Int, Long],
-  localOptimaHistory: collection.mutable.Map[Int, Long]) extends DcopStatsGatherer {
-  var steps = 0
-  override def shouldTerminate(g: Graph[Any, Any]) = {
-    val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
-    val numberOfVerticesInLocalOptima = g.aggregate(NumberOfLocalOptimaCounter)
-    conflictsHistory += ((steps, numberOfConflicts))
-    localOptimaHistory += ((steps, numberOfVerticesInLocalOptima))
-    steps += 1
-    false
-  }
-}
-
-case class DcopAlgorithmRun(//[AgentId, Action, State, Config <: Configuration[AgentId, Action], UtilityType](
-  optimizer: Algorithm,
-  graphInstantiator: GridBuilder, //GraphInstantiator,
-  maxUtility: Double,
-  domainSize: Int,
-  executionConfig: ExecutionConfiguration[Any, Any],
-  runNumber: Int,
-  aggregationInterval: Int,
-  revision: String,
-  evaluationDescription: String) extends SignalCollectAlgorithmBridge{
-
-  def roundToMillisecondFraction(nanoseconds: Long): Double = {
-    ((nanoseconds / 100000.0).round) / 10.0
+      false
+    }
   }
 
-  def runAlgorithm(): List[Map[String, String]] = {
-    
-    val evaluationGraph = graphInstantiator.build()//Graph(GraphBuilder)
-    
-    println("Starting.")
+  class DcopStatsGathererWithHistory(
+    conflictsHistory: collection.mutable.Map[Int, Long],
+    localOptimaHistory: collection.mutable.Map[Int, Long]) extends DcopStatsGatherer {
+    var steps = 0
+    override def shouldTerminate(g: Graph[Any, Any]) = {
+      val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
+      val numberOfVerticesInLocalOptima = g.aggregate(NumberOfLocalOptimaCounter)
+      conflictsHistory += ((steps, numberOfConflicts))
+      localOptimaHistory += ((steps, numberOfVerticesInLocalOptima))
+      steps += 1
+      false
+    }
+  }
 
-    println(optimizer)
+  case class DcopAlgorithmRun( //[AgentId, Action, State, Config <: Configuration[AgentId, Action], UtilityType](
+    //optimizer: Algorithm,
+    graphInstantiator: GridBuilder, //GraphInstantiator,
+    maxUtility: Double,
+    domainSize: Int,
+    executionConfig: ExecutionConfiguration[Any, Any],
+    runNumber: Int,
+    aggregationInterval: Int,
+    revision: String,
+    evaluationDescription: String) {
 
-    var computeRanks = false
+    def roundToMillisecondFraction(nanoseconds: Long): Double = {
+      ((nanoseconds / 100000.0).round) / 10.0
+    }
 
-    println("Preparing Execution configuration.")
-    println(executionConfig.executionMode)
+    def runAlgorithm(): List[Map[String, String]] = {
 
-    println(optimizer.toString)
-    var finalResults = List[Map[String, String]]()
+      val evaluationGraph = graphInstantiator.build() //Graph(GraphBuilder)
 
-    var runResult = Map[String, String]()
+      println("Starting.")
 
-    val date: Date = new Date
-    val startTime = System.nanoTime()
-    var extraStats = RunStats(None, maxUtility, None)
+      //println(optimizer)
 
-    val conflictsHistory = collection.mutable.Map.empty[Int, Long]
-    val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
+      var computeRanks = false
 
-    val extensiveTerminationDetector = new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory)
-    extensiveTerminationDetector.shouldTerminate(evaluationGraph)
+      println("Preparing Execution configuration.")
+      println(executionConfig.executionMode)
 
-    println(evaluationGraph)
+      println(algorithmName)
+      var finalResults = List[Map[String, String]]()
 
-    val usedExecutionConfig =
-      if (aggregationInterval <= 0) {
-        executionConfig
-      } else {
-        println("Gathering extensive stats")
-        executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
-      }
+      var runResult = Map[String, String]()
 
-    println("*Executing...")
-    val stats = evaluationGraph.execute(usedExecutionConfig)
+      val date: Date = new Date
+      val startTime = System.nanoTime()
+      var extraStats = RunStats(None, maxUtility, None)
 
-    //   stats.aggregatedWorkerStatistics.numberOfOutgoingEdges
-    val finishTime = System.nanoTime
-    val executionTime = roundToMillisecondFraction(finishTime - startTime)
+      val conflictsHistory = collection.mutable.Map.empty[Int, Long]
+      val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-    val conflictCount = evaluationGraph.mapReduce[DcopVertex, Long](
-      { v => v.state.computeExpectedNumberOfConflicts },
-      { case (t1, t2) => t1 + t2 },
-      0)
+      val extensiveTerminationDetector = new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory)
+      extensiveTerminationDetector.shouldTerminate(evaluationGraph)
 
-    val numberOfLocalOptima = evaluationGraph.mapReduce[DcopVertex, Long](
-      { v => if (this.isInLocalOptimum(v.state)) 1 else 0 },
-      { case (t1, t2) => t1 + t2 },
-      0)
-      
-    val isNe = evaluationGraph.mapReduce[DcopVertex, Boolean](
-      { v => {this.isInLocalOptimum(v.state)}},
-      { case (t1, t2) => t1 && t2 },
-      true)
+      println(evaluationGraph)
 
-    val utility = (maxUtility - conflictCount * 2).toDouble
+      val usedExecutionConfig =
+        if (aggregationInterval <= 0) {
+          executionConfig
+        } else {
+          println("Gathering extensive stats")
+          executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
+        }
 
-    val avgGlobalUtilityRatio = extraStats.avgGlobalVsOpt.getOrElse(-1)
-    val endUtilityRatio = (maxUtility - conflictCount * 2).toDouble / maxUtility
-    val isOptimal = if (conflictCount == 0) 1 else 0
-    val timeToFirstLocOptimum = extraStats.timeToFirstLocOptimum.getOrElse(-1)
-    // val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (evaluationGraph.size.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
-    runResult += s"evaluationDescription" -> evaluationDescription //
-    runResult += s"optimizer" -> optimizer.toString //
-    runResult += s"utility" -> utility.toString
-    runResult += s"domainSize" -> domainSize.toString
-    runResult += s"graphSize" -> stats.aggregatedWorkerStatistics.verticesAdded.toString //
-    runResult += s"executionMode" -> executionConfig.executionMode.toString //
-    runResult += s"conflictCount" -> conflictCount.toString //
-    runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
-    runResult += s"isNe" -> isNe.toString //
-    runResult += s"avgGlobalUtilityRatio" -> avgGlobalUtilityRatio.toString // Measure (1)
-    runResult += s"endUtilityRatio" -> endUtilityRatio.toString // Measure (2)
-    runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
-    runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
-    // runResult += s"messagesPerVertexPerStep" -> messagesPerVertexPerStep.toString // Measure (5)
-    runResult += s"revision" -> revision
-    runResult += s"aggregationInterval" -> aggregationInterval.toString
-    runResult += s"run" -> runNumber.toString
-    runResult += s"stepsLimit" -> executionConfig.stepsLimit.toString
-    runResult += s"timeLimit" -> executionConfig.timeLimit.toString
-    runResult += s"graphStructure" -> evaluationGraph.toString //
+      println("*Executing...")
+      val stats = evaluationGraph.execute(usedExecutionConfig)
 
-    runResult += s"computationTimeInMilliseconds" -> executionTime.toString //
-    runResult += s"date" -> date.toString //
-    runResult += s"executionHostname" -> java.net.InetAddress.getLocalHost.getHostName //
-    runResult += s"numberOfCollectSteps" -> stats.executionStatistics.collectSteps.toString //
-    runResult += s"numberOfSignalSteps" -> stats.executionStatistics.signalSteps.toString //
-    runResult += s"computationTime" -> stats.executionStatistics.computationTime.toString //
-    runResult += s"terminationReason" -> stats.executionStatistics.terminationReason.toString //
-    runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString // 
-    runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString //
+      //   stats.aggregatedWorkerStatistics.numberOfOutgoingEdges
+      val finishTime = System.nanoTime
+      val executionTime = roundToMillisecondFraction(finishTime - startTime)
 
-    //  println("\nNumber of conflicts at the end: " + ColorPrinter(evaluationGraph).countConflicts(evaluationGraph.graph.aggregate(idStateMapAggregator)))
-    println("Shutting down.")
-    evaluationGraph.shutdown
+      val conflictCount = evaluationGraph.mapReduce[DcopVertex, Long](
+        { v => v.state.computeExpectedNumberOfConflicts },
+        { case (t1, t2) => t1 + t2 },
+        0)
 
-    runResult :: finalResults
+      val numberOfLocalOptima = evaluationGraph.mapReduce[DcopVertex, Long](
+        { v => if (isInLocalOptimum(v.state)) 1 else 0 },
+        { case (t1, t2) => t1 + t2 },
+        0)
 
+      val isNe = evaluationGraph.mapReduce[DcopVertex, Boolean](
+        { v => { isInLocalOptimum(v.state) } },
+        { case (t1, t2) => t1 && t2 },
+        true)
+
+      val utility = (maxUtility - conflictCount * 2).toDouble
+
+      val avgGlobalUtilityRatio = extraStats.avgGlobalVsOpt.getOrElse(-1)
+      val endUtilityRatio = (maxUtility - conflictCount * 2).toDouble / maxUtility
+      val isOptimal = if (conflictCount == 0) 1 else 0
+      val timeToFirstLocOptimum = extraStats.timeToFirstLocOptimum.getOrElse(-1)
+      // val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (evaluationGraph.size.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
+      runResult += s"evaluationDescription" -> evaluationDescription //
+      runResult += s"optimizer" -> algorithmName //
+      runResult += s"utility" -> utility.toString
+      runResult += s"domainSize" -> domainSize.toString
+      runResult += s"graphSize" -> stats.aggregatedWorkerStatistics.verticesAdded.toString //
+      runResult += s"executionMode" -> executionConfig.executionMode.toString //
+      runResult += s"conflictCount" -> conflictCount.toString //
+      runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
+      runResult += s"isNe" -> isNe.toString //
+      runResult += s"avgGlobalUtilityRatio" -> avgGlobalUtilityRatio.toString // Measure (1)
+      runResult += s"endUtilityRatio" -> endUtilityRatio.toString // Measure (2)
+      runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
+      runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
+      // runResult += s"messagesPerVertexPerStep" -> messagesPerVertexPerStep.toString // Measure (5)
+      runResult += s"revision" -> revision
+      runResult += s"aggregationInterval" -> aggregationInterval.toString
+      runResult += s"run" -> runNumber.toString
+      runResult += s"stepsLimit" -> executionConfig.stepsLimit.toString
+      runResult += s"timeLimit" -> executionConfig.timeLimit.toString
+      runResult += s"graphStructure" -> evaluationGraph.toString //
+
+      runResult += s"computationTimeInMilliseconds" -> executionTime.toString //
+      runResult += s"date" -> date.toString //
+      runResult += s"executionHostname" -> java.net.InetAddress.getLocalHost.getHostName //
+      runResult += s"numberOfCollectSteps" -> stats.executionStatistics.collectSteps.toString //
+      runResult += s"numberOfSignalSteps" -> stats.executionStatistics.signalSteps.toString //
+      runResult += s"computationTime" -> stats.executionStatistics.computationTime.toString //
+      runResult += s"terminationReason" -> stats.executionStatistics.terminationReason.toString //
+      runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString // 
+      runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString //
+
+      //  println("\nNumber of conflicts at the end: " + ColorPrinter(evaluationGraph).countConflicts(evaluationGraph.graph.aggregate(idStateMapAggregator)))
+      println("Shutting down.")
+      evaluationGraph.shutdown
+
+      runResult :: finalResults
+
+    }
   }
 }
 
@@ -382,7 +384,7 @@ case class DcopAlgorithmRun(//[AgentId, Action, State, Config <: Configuration[A
 //  }
 //}
 
-case class RunStats(var avgGlobalVsOpt: Option[Double], optUtility: Double, var timeToFirstLocOptimum: Option[Int]){
+case class RunStats(var avgGlobalVsOpt: Option[Double], optUtility: Double, var timeToFirstLocOptimum: Option[Int]) {
   avgGlobalVsOpt = None
   timeToFirstLocOptimum = None
 }

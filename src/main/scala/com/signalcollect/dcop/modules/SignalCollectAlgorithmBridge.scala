@@ -3,7 +3,7 @@ package com.signalcollect.dcop.modules
 import com.signalcollect._
 import com.signalcollect.Vertex
 
-trait SignalCollectAlgorithmBridge extends Algorithm {
+trait SignalCollectAlgorithmBridge extends Algorithm  {
 
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] = {
     new DcopVertex(id, createInitialState(id, initialAction, domain), false)

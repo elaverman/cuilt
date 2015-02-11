@@ -33,6 +33,8 @@ trait Algorithm extends Serializable {
 
   }
 
+  def algorithmName: String
+  
   def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
 
   def createEdge(targetId: AgentId): Edge[AgentId] 

@@ -1,9 +1,9 @@
 package com.signalcollect.dcop.graph
 
 import com.signalcollect.dcop.modules._
+import com.signalcollect.dcop.evaluation._
 import com.signalcollect._
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.dcop.modules.SignalCollectAlgorithmBridge
 
 object Test extends App {
 
@@ -39,14 +39,19 @@ object VertexColoringAlgorithm extends IntAlgorithm
   with ArgmaxADecisionRule
   with NashEquilibriumConvergence
   with MemoryLessTargetFunction
-  with SignalCollectAlgorithmBridge {
+  with SignalCollectAlgorithmBridge 
+  with Execution {
   def changeProbability = 0.7
+  def algorithmName = "VCA"
 }
 
-object RankedVertexColoringAlgorithm extends Algorithm with RankedState
+object RankedVertexColoringAlgorithm extends Algorithm 
+  with RankedState
   with VertexColoringUtility
   with FloodAdjustmentSchedule
   with ArgmaxADecisionRule
   with NashEquilibriumConvergence
   with MemoryLessTargetFunction
-  with SignalCollectAlgorithmBridge
+  with SignalCollectAlgorithmBridge {
+  def algorithmName = "RankedVCA"
+}
