@@ -5,3 +5,8 @@ before_install:
   - git clone git://github.com/uzh/signal-collect.git ../signal-collect
 before_script:
   - "export JAVA_OPTS=-Xmx2048m"
+script:
+  - sbt clean coverage test
+  - sbt coverageReport
+  - sbt coverageAggregate
+  - sbt codacyCoverage
