@@ -12,6 +12,7 @@ import com.signalcollect.nodeprovisioning.torque.TorqueJobSubmitter
 import com.signalcollect.nodeprovisioning.torque.TorquePriority
 import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules._
+import com.signalcollect.dcop.algorithms._
 
 object DcopEvaluation extends App {
 
@@ -23,7 +24,7 @@ object DcopEvaluation extends App {
     " -XX:-UseBiasedLocking" +
     " -XX:MaxInlineSize=1024"
 
-  def assemblyPath = "./target/scala-2.11/dcop-algorithms-evaluation-assembly-1.0-SNAPSHOT.jar"
+  def assemblyPath = "./target/scala-2.11/dcop-algorithms-assembly-1.0-SNAPSHOT.jar"
   val assemblyFile = new File(assemblyPath)
   val kraken = new TorqueHost(
     jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
@@ -59,100 +60,39 @@ object DcopEvaluation extends App {
   def evalNumber = 5
   def runs = 1
   def pure = true
-//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
+  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
+//    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??
   val simpleOptimizers: List[IntAlgorithm with Execution] = List(
-    VertexColoringAlgorithm)
+    new Dsa(0.7))
 
   //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
   //  val dimacsGraphNamesList = new java.io.File("dimacsInput").listFiles.filter(x => (x.getName.endsWith("flat1000_76_0.col"))).map(_.getName)
 
   def initial0Value = 0
 
-//  def simpleDcopVertexCreator(
-//    optimizer: Optimizer[Int, Int, SimpleConfig[Int, Int], Double],
-//    domainSize: Int,
-//    debug: Boolean = false): Int => SimpleDcopVertex[Int, Int, Double] = {
-//    vertexId: Int =>
-//      new SimpleDcopVertex[Int, Int, Double](
-//        optimizer,
-//        SimpleConfig[Int, Int](
-//          neighborhood = Map.empty[Int, Int].withDefaultValue(0),
-//          numberOfCollects = 0,
-//          domain = (0 to domainSize - 1).toSet,
-//          centralVariableAssignment = (vertexId, initial0Value)),
-//        debug)
-//  }
-//
-//  def simpleDcopEdgeCreator: Int => Edge[Int] = {
-//    targetId: Int =>
-//      new SimpleDcopEdge(targetId)
-//  }
-//
-//  def memoryDcopVertexCreator(
-//    optimizer: Optimizer[Int, Int, SimpleMemoryConfig[Int, Int, Double], Double],
-//    domainSize: Int,
-//    debug: Boolean = false): Int => MemoryDcopVertex[Int, Int] = {
-//    vertexId: Int =>
-//      new MemoryDcopVertex[Int, Int](
-//        optimizer,
-//        SimpleMemoryConfig[Int, Int, Double](
-//          neighborhood = Map.empty[Int, Int].withDefaultValue(0),
-//          memory = Map.empty[Int, Double].withDefaultValue(0),
-//          numberOfCollects = 0,
-//          domain = (0 to domainSize - 1).toSet,
-//          centralVariableAssignment = (vertexId, initial0Value)),
-//        debug)
-//  }
-//
-//  def memoryDcopEdgeCreator: Int => Edge[Int] = {
-//    targetId: Int =>
-//      new MemoryDcopEdge(targetId)
-//  }
-//
-//  def rankedDcopVertexCreator(
-//    optimizer: Optimizer[Int, Int, RankedConfig[Int, Int], Double],
-//    domainSize: Int,
-//    debug: Boolean = false): Int => RankedDcopVertex[Int, Int, Double] = {
-//    vertexId: Int =>
-//      new RankedDcopVertex[Int, Int, Double](
-//        optimizer,
-//        RankedConfig[Int, Int](
-//          neighborhood = Map.empty[Int, Int].withDefaultValue(0),
-//          ranks = Map.empty[Int, Double].withDefaultValue(0),
-//          numberOfCollects = 0,
-//          domain = (0 to domainSize - 1).toSet,
-//          centralVariableAssignment = (vertexId, initial0Value)),
-//        debug = debug)
-//  }
-//
-//  def rankedDcopEdgeCreator: Int => Edge[Int] = {
-//    targetId: Int =>
-//      new RankedDcopEdge(targetId)
-//  }
 
-  for (repetitions <- (1 to 1))
+  for (repetitions <- (1 to 10))
     for (numberOfColors <- Set(9)) {
-      for (gridWidth <- Set(10)) {
-        for (em <- List(ExecutionMode.Synchronous, ExecutionMode.OptimizedAsynchronous)) {
+      for (gridWidth <- Set(5)) {
+        for (em <- List(ExecutionMode.Synchronous/*, ExecutionMode.OptimizedAsynchronous*/)) {
           for (myOptimizer <- simpleOptimizers) {
 
-          val myGrid = new GridBuilder(myOptimizer, gridWidth, domain= (0 until numberOfColors).toSet)
+          val myGrid = new GridInstantiator(myOptimizer, gridWidth, domain = (0 until numberOfColors).toSet)
 
           evaluation = evaluation.addEvaluationRun(myOptimizer.DcopAlgorithmRun(
-            //optimizer = myOptimizer, //TODO: redundant. take from grid?? 
             graphInstantiator = myGrid,
             maxUtility = myGrid.maxUtility,
             domainSize = numberOfColors,
-            executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(1000000),
+            executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(10000), //1000000),
             runNumber = 1,
-            aggregationInterval = 0,
+            aggregationInterval = if (em == ExecutionMode.Synchronous) 1 else 100,
+            fullHistoryStats = true,
             revision = "2",
-            evaluationDescription = "Dsan eval").runAlgorithm)
+            evaluationDescription = evalName).runAlgorithm)
 
           }
         }

@@ -94,11 +94,17 @@ trait Execution extends SignalCollectAlgorithmBridge {
    */
   class DcopStatsGatherer extends GlobalTerminationDetection[Any, Any] {
     override def aggregationInterval = 1
+    var steps = 0
     override def shouldTerminate(g: Graph[Any, Any]) = {
       //    val isInLocalOptimum = g.aggregate(LocalOptimumDetector)
       //    val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
       val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
-
+      extraStats.updateAvgGlobal(numberOfConflicts, steps)
+      //TODO verify
+      if (isInLocalOptimum && steps > 0) {
+        extraStats.updateTimeToFirstLocOptimum(steps)
+      }
+      steps += 1
       false
     }
   }
@@ -106,25 +112,58 @@ trait Execution extends SignalCollectAlgorithmBridge {
   class DcopStatsGathererWithHistory(
     conflictsHistory: collection.mutable.Map[Int, Long],
     localOptimaHistory: collection.mutable.Map[Int, Long]) extends DcopStatsGatherer {
-    var steps = 0
+
+    //TODO fix code repetition.
     override def shouldTerminate(g: Graph[Any, Any]) = {
-      val numberOfConflicts = g.aggregate(NumberOfConflictsCounter)
+      val numberOfConflictsHistory = g.aggregate(NumberOfConflictsCounter)
       val numberOfVerticesInLocalOptima = g.aggregate(NumberOfLocalOptimaCounter)
-      conflictsHistory += ((steps, numberOfConflicts))
+      conflictsHistory += ((steps, numberOfConflictsHistory))
       localOptimaHistory += ((steps, numberOfVerticesInLocalOptima))
+      val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
+      extraStats.updateAvgGlobal(numberOfConflicts, steps)
+      //TODO verify
+      if (isInLocalOptimum && steps > 0) {
+        extraStats.updateTimeToFirstLocOptimum(steps)
+      }
       steps += 1
       false
     }
   }
 
-  case class DcopAlgorithmRun( //[AgentId, Action, State, Config <: Configuration[AgentId, Action], UtilityType](
-    //optimizer: Algorithm,
-    graphInstantiator: GridBuilder, //GraphInstantiator,
+  case class RunStats(var avgGlobal: Option[Double], allSatisfiedUtility: Double, var timeToFirstLocOptimum: Option[Int]) {
+    avgGlobal = None
+    timeToFirstLocOptimum = None
+
+    def updateAvgGlobal(globalConflicts: Double, step: Int) = {
+      val globalUtility = allSatisfiedUtility - globalConflicts * 2
+      avgGlobal = avgGlobal match {
+        case None => Some(globalUtility)
+        case Some(oldAvg) => {
+          assert(step != 0)
+          Some((oldAvg * (step - 1) + globalUtility) / step)
+        }
+      }
+    }
+
+    def updateTimeToFirstLocOptimum(step: Int) {
+      timeToFirstLocOptimum = timeToFirstLocOptimum match {
+        case None => Some(step)
+        case Some(older) => Some(older)
+      }
+    }
+
+  }
+
+  var extraStats = RunStats(None, -1.0, None)
+
+  case class DcopAlgorithmRun(
+    graphInstantiator: GraphInstantiator,
     maxUtility: Double,
     domainSize: Int,
     executionConfig: ExecutionConfiguration[Any, Any],
     runNumber: Int,
     aggregationInterval: Int,
+    fullHistoryStats: Boolean,
     revision: String,
     evaluationDescription: String) {
 
@@ -134,11 +173,9 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
     def runAlgorithm(): List[Map[String, String]] = {
 
-      val evaluationGraph = graphInstantiator.build() //Graph(GraphBuilder)
+      val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
       println("Starting.")
-
-      //println(optimizer)
 
       var computeRanks = false
 
@@ -146,34 +183,43 @@ trait Execution extends SignalCollectAlgorithmBridge {
       println(executionConfig.executionMode)
 
       println(algorithmName)
+
+      val numberOfEdges = evaluationGraph.mapReduce[DcopVertex, Long](
+        { v => v.edgeCount },
+        { case (t1, t2) => t1 + t2 },
+        0)
+
+      val allSatisfiedUtility = numberOfEdges
+      extraStats = RunStats(None, allSatisfiedUtility, None)
+
       var finalResults = List[Map[String, String]]()
-
       var runResult = Map[String, String]()
-
-      val date: Date = new Date
-      val startTime = System.nanoTime()
-      var extraStats = RunStats(None, maxUtility, None)
 
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      val extensiveTerminationDetector = new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory)
+      val extensiveTerminationDetector = if (fullHistoryStats) {
+        new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory)
+      } else { new DcopStatsGatherer }
       extensiveTerminationDetector.shouldTerminate(evaluationGraph)
 
       println(evaluationGraph)
 
       val usedExecutionConfig =
         if (aggregationInterval <= 0) {
+          println("No extra stats gathering.")
           executionConfig
         } else {
-          println("Gathering extensive stats")
+          println("Gathering extensive stats.")
           executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
         }
 
       println("*Executing...")
+
+      val date: Date = new Date
+      val startTime = System.nanoTime()
       val stats = evaluationGraph.execute(usedExecutionConfig)
 
-      //   stats.aggregatedWorkerStatistics.numberOfOutgoingEdges
       val finishTime = System.nanoTime
       val executionTime = roundToMillisecondFraction(finishTime - startTime)
 
@@ -192,27 +238,34 @@ trait Execution extends SignalCollectAlgorithmBridge {
         { case (t1, t2) => t1 && t2 },
         true)
 
-      val utility = (maxUtility - conflictCount * 2).toDouble
+      def precision(number: Double): Double = {
+        math.floor(number * 10000) / 10000
+      }
 
-      val avgGlobalUtilityRatio = extraStats.avgGlobalVsOpt.getOrElse(-1)
-      val endUtilityRatio = (maxUtility - conflictCount * 2).toDouble / maxUtility
-      val isOptimal = if (conflictCount == 0) 1 else 0
+      val utility = (allSatisfiedUtility - conflictCount * 2).toDouble
+
+      val avgGlobalUtilityRatio = extraStats.avgGlobal.getOrElse[Double](-1.0) / maxUtility
+      //TODO: verify: number of edges = maxUtility for grid.
+      val endUtilityRatio = (allSatisfiedUtility - conflictCount * 2).toDouble / maxUtility
+      val isOptimal = (allSatisfiedUtility - conflictCount * 2 == maxUtility) //if (conflictCount == 0) 1 else 0
       val timeToFirstLocOptimum = extraStats.timeToFirstLocOptimum.getOrElse(-1)
-      // val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (evaluationGraph.size.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
+      val graphSize = stats.aggregatedWorkerStatistics.verticesAdded
+      val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (graphSize.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
       runResult += s"evaluationDescription" -> evaluationDescription //
       runResult += s"optimizer" -> algorithmName //
       runResult += s"utility" -> utility.toString
       runResult += s"domainSize" -> domainSize.toString
-      runResult += s"graphSize" -> stats.aggregatedWorkerStatistics.verticesAdded.toString //
+      runResult += s"graphSize" -> graphSize.toString //
+      runResult += s"numberOfEdges" -> numberOfEdges.toString //
       runResult += s"executionMode" -> executionConfig.executionMode.toString //
       runResult += s"conflictCount" -> conflictCount.toString //
       runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
       runResult += s"isNe" -> isNe.toString //
-      runResult += s"avgGlobalUtilityRatio" -> avgGlobalUtilityRatio.toString // Measure (1)
-      runResult += s"endUtilityRatio" -> endUtilityRatio.toString // Measure (2)
+      runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString // Measure (1)
+      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString // Measure (2)
       runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
       runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
-      // runResult += s"messagesPerVertexPerStep" -> messagesPerVertexPerStep.toString // Measure (5)
+      runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString // Measure (5)
       runResult += s"revision" -> revision
       runResult += s"aggregationInterval" -> aggregationInterval.toString
       runResult += s"run" -> runNumber.toString
@@ -229,6 +282,8 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"terminationReason" -> stats.executionStatistics.terminationReason.toString //
       runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString // 
       runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString //
+      runResult += s"conflictsHistory" -> conflictsHistory.toString //
+      runResult += s"localOptimaHistory" -> localOptimaHistory.toString
 
       //  println("\nNumber of conflicts at the end: " + ColorPrinter(evaluationGraph).countConflicts(evaluationGraph.graph.aggregate(idStateMapAggregator)))
       println("Shutting down.")
@@ -239,6 +294,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
     }
   }
 }
+
 
 ////TODO Ugly. Rewrite
 //case class DcopMixedAlgorithmRun[AgentId, Action, UtilityType](optimizer1: Optimizer[AgentId, Action, Configuration[AgentId, Action], UtilityType], optimizer2: Optimizer[AgentId, Action, Configuration[AgentId, Action], UtilityType], proportion: Double, /*domain: Set[Int], */ evaluationGraph: EvaluationGraph[AgentId, Action], executionConfig: ExecutionConfiguration, runNumber: Int, aggregationInterval: Int, revision: String, evaluationDescription: String) {
@@ -384,7 +440,4 @@ trait Execution extends SignalCollectAlgorithmBridge {
 //  }
 //}
 
-case class RunStats(var avgGlobalVsOpt: Option[Double], optUtility: Double, var timeToFirstLocOptimum: Option[Int]) {
-  avgGlobalVsOpt = None
-  timeToFirstLocOptimum = None
-}
+

@@ -7,7 +7,13 @@ import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.dcop.modules.SignalCollectAlgorithmBridge
 
-class GridBuilder(myAlgo: IntAlgorithm, gridWidth: Int, domain: Set[Int]) {
+
+trait GraphInstantiator extends Serializable {
+  def build(graphBuilder: GraphBuilder[Any, Any]): Graph[Any, Any]
+}
+
+//TODO: Decouple the functions for building vertices/edges from the algorithm.
+class GridInstantiator(myAlgo: IntAlgorithm, gridWidth: Int, domain: Set[Int]) extends GraphInstantiator {
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {
 
