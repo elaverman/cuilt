@@ -60,9 +60,9 @@ object DcopEvaluation extends App {
   def evalNumber = 5
   def runs = 1
   def pure = true
-  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
+//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-//    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??

@@ -83,6 +83,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
               //println("=>" + state)
               0
             } else {
+              //println(state.agentId + "-> unchanged? "+isStateUnchanged(oldState, state)+" converged? "+ isConverged(state))
               1
             }
           }

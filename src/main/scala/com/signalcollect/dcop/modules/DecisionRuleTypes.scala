@@ -15,7 +15,10 @@ trait DecisionRule extends Algorithm {
   def isInLocalOptimum(c: State): Boolean = {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
     val maxUtility = expectedUtilities.values.max
-    isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)
+    val res = isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)
+//    if (!res) 
+//      println("###"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
+    res
   }
 
   protected final def isInLocalOptimumGivenUtilitiesAndMaxUtility(
