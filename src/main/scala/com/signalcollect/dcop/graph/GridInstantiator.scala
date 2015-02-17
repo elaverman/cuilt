@@ -12,7 +12,7 @@ trait GraphInstantiator extends Serializable {
   def build(graphBuilder: GraphBuilder[Any, Any]): Graph[Any, Any]
 }
 
-//TODO: Decouple the functions for building vertices/edges from the algorithm.
+//TODO: Decouple the functions for building vertices/edges from the algorithm. Add pluggable function for action initialization.
 class GridInstantiator(myAlgo: IntAlgorithm, gridWidth: Int, domain: Set[Int]) extends GraphInstantiator {
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {

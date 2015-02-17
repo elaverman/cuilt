@@ -21,12 +21,20 @@ trait Execution extends SignalCollectAlgorithmBridge {
     def extract(v: Vertex[_, _, _, _]) = v match {
       //TODO: Investigate the change here
       case v: DcopVertex => {
-       val res = isInLocalOptimum(v.state)
-//       if (!res){
-//         print("!!!"+v.id+"->"+v.state.centralVariableValue+": "+v.state.neighborActions)
-//       }
-//       else println(v.id+"->"+v.state.centralVariableValue+": "+v.state.neighborActions)
-       res
+        val res = v.lastSignalState match {
+          case Some(oldState) => {
+            //It's determining if at the last step it was in a LocalOptimum. Equivalent to if it was in a local optimum at this step before it changed action.
+            isInLocalOptimum(v.state.withCentralVariableAssignment(oldState.centralVariableValue))
+            //            if (v.state != v.lastSignalState.get)
+            //              println("different: " + v.state + " old: " + v.lastSignalState)
+          }
+          case None => false
+        }
+
+        //        if (!res) {
+        //          println("!!!" + v.id + "->" + v.state.centralVariableValue + ": " + v.state.neighborActions)
+        //        } else println(v.id + "->" + v.state.centralVariableValue + ": " + v.state.neighborActions)
+        res
       }
       case other => throw new Exception("This detector can only handle Dcop vertices.")
     }
@@ -46,7 +54,15 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
     def extract(v: Vertex[_, _, _, _]) = v match {
       //TODO: Check next line
-      case v: DcopVertex => if (isInLocalOptimum(v.state)) 1 else 0
+      case v: DcopVertex => {
+        v.lastSignalState match {
+          case Some(oldState) => {
+            //It's determining if at the last step it was in a LocalOptimum.
+            if (isInLocalOptimum(v.state.withCentralVariableAssignment(oldState.centralVariableValue))) 1 else 0
+          }
+          case None => 0
+        }
+      }
       case other => throw new Exception("This detector can only handle Dcop vertices.")
     }
 
@@ -86,7 +102,15 @@ trait Execution extends SignalCollectAlgorithmBridge {
   object NumberOfConflictsCounter extends ModularAggregationOperation[Long] {
     def extract(v: Vertex[_, _, _, _]) = v match {
       //TODO: Check next line
-      case v: DcopVertex => v.state.computeExpectedNumberOfConflicts
+      case v: DcopVertex => {
+        v.lastSignalState match {
+          case Some(oldState) => {
+            //It's determining the number of conflicts at the last step.
+            (v.state.withCentralVariableAssignment(oldState.centralVariableValue)).computeExpectedNumberOfConflicts
+          }
+          case None => 0
+        }
+      }
       case other => throw new Exception("This counter can only handle Dcop vertices.")
     }
 
@@ -104,8 +128,16 @@ trait Execution extends SignalCollectAlgorithmBridge {
    *  @param shouldTerminate Function that takes the graph as a parameter and returns true iff the computation should
    *               be terminated.
    */
-  class DcopStatsGatherer extends GlobalTerminationDetection[Any, Any] {
-    override def aggregationInterval = 1
+
+  class PhoneyDcopStatsGatherer(agg: Int) extends GlobalTerminationDetection[Any, Any] {
+    override def aggregationInterval = agg
+    override def shouldTerminate(g: Graph[Any, Any]) = {
+      false
+    }
+  }
+
+  class DcopStatsGatherer(agg: Int) extends GlobalTerminationDetection[Any, Any] {
+    override def aggregationInterval = agg
     var steps = 0
     override def shouldTerminate(g: Graph[Any, Any]) = {
       //    val isInLocalOptimum = g.aggregate(LocalOptimumDetector)
@@ -123,7 +155,8 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
   class DcopStatsGathererWithHistory(
     conflictsHistory: collection.mutable.Map[Int, Long],
-    localOptimaHistory: collection.mutable.Map[Int, Long]) extends DcopStatsGatherer {
+    localOptimaHistory: collection.mutable.Map[Int, Long], 
+    agg: Int) extends DcopStatsGatherer(agg) {
 
     //TODO fix code repetition.
     override def shouldTerminate(g: Graph[Any, Any]) = {
@@ -138,21 +171,21 @@ trait Execution extends SignalCollectAlgorithmBridge {
         extraStats.updateTimeToFirstLocOptimum(steps)
       }
 
-//      println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
-//      val actions = g.aggregate(ActionDetector)
-//
-//      var a: Array[Long] = new Array(actions.size)
-//
-//      actions.foreach(x => a(x._1) = x._2)
-//
-//      val width = math.floor(math.sqrt(a.size)).toInt
-//
-//      for (i <- 0 until width) {
-//        for (j <- 0 until width) {
-//          print(a(i * width + j) + " ")
-//        }
-//        println
-//      }
+      println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
+      //      val actions = g.aggregate(ActionDetector)
+      //
+      //      var a: Array[Long] = new Array(actions.size)
+      //
+      //      actions.foreach(x => a(x._1) = x._2)
+      //
+      //      val width = math.floor(math.sqrt(a.size)).toInt
+      //
+      //      for (i <- 0 until width) {
+      //        for (j <- 0 until width) {
+      //          print(a(i * width + j) + " ")
+      //        }
+      //        println
+      //      }
 
       steps += 1
       false
@@ -227,10 +260,12 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      val extensiveTerminationDetector = if (fullHistoryStats) {
-        new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory)
-      } else { new DcopStatsGatherer }
-      extensiveTerminationDetector.shouldTerminate(evaluationGraph)
+      val extensiveTerminationDetector = 
+          new PhoneyDcopStatsGatherer(aggregationInterval)        
+//      if (fullHistoryStats) {
+//        new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory, aggregationInterval)
+//      } else { new DcopStatsGatherer(aggregationInterval) }
+//      extensiveTerminationDetector.shouldTerminate(evaluationGraph)
 
       println(evaluationGraph)
 
