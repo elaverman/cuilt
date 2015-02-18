@@ -23,7 +23,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
   class DcopVertex(
     id: AgentId,
     initialState: State,
-    debug: Boolean = false)
+    debug: Boolean = true)
     extends DataGraphVertex(id, initialState) {
 
     def changeMove(c: State): State = {
