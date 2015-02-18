@@ -155,7 +155,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
   class DcopStatsGathererWithHistory(
     conflictsHistory: collection.mutable.Map[Int, Long],
-    localOptimaHistory: collection.mutable.Map[Int, Long], 
+    localOptimaHistory: collection.mutable.Map[Int, Long],
     agg: Int) extends DcopStatsGatherer(agg) {
 
     //TODO fix code repetition.
@@ -260,21 +260,22 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      val extensiveTerminationDetector = 
-          new PhoneyDcopStatsGatherer(aggregationInterval)        
-//      if (fullHistoryStats) {
-//        new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory, aggregationInterval)
-//      } else { new DcopStatsGatherer(aggregationInterval) }
-//      extensiveTerminationDetector.shouldTerminate(evaluationGraph)
-
       println(evaluationGraph)
 
       val usedExecutionConfig =
         if (aggregationInterval <= 0) {
-          println("No extra stats gathering.")
+          println("No extensive stats will be gathered.")
           executionConfig
         } else {
-          println("Gathering extensive stats.")
+          val extensiveTerminationDetector =
+            if (fullHistoryStats) {
+              println("Will gather extensive stats, including full history.")
+              new DcopStatsGathererWithHistory(conflictsHistory, localOptimaHistory, aggregationInterval)
+            } else {
+              println("Will gather extensive stats, but not the history.")
+              new DcopStatsGatherer(aggregationInterval)
+            }
+          extensiveTerminationDetector.shouldTerminate(evaluationGraph)
           executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
         }
 
@@ -355,7 +356,6 @@ trait Execution extends SignalCollectAlgorithmBridge {
       localOptimaHistory.foreach(x => { a(x._1) = x._2 })
       runResult += s"localOptimaHistory" -> a.mkString(", ")
 
-      //  println("\nNumber of conflicts at the end: " + ColorPrinter(evaluationGraph).countConflicts(evaluationGraph.graph.aggregate(idStateMapAggregator)))
       println("Shutting down.")
       evaluationGraph.shutdown
 
