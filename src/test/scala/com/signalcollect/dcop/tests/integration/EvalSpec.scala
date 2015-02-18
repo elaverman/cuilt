@@ -69,7 +69,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         /*********/
 
         val numberOfColors = 4
-        val gridWidth = 1
+        val gridWidth = 2
         val em = ExecutionMode.PureAsynchronous
         val myAlgorithm = new Dsa(0.7)
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
@@ -96,7 +96,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
         true
       },
-      minSuccessful(1))
+      minSuccessful(10))
   }
   
   
@@ -127,8 +127,8 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         val simpleAlgorithms: List[IntAlgorithm with Execution] = List(
           new Dsa(0.7))
 
-        val numberOfColors = 9//colors % 6 + 4 //between 4 and 9
-        val gridWidth = 3//width % 10
+        val numberOfColors = colors % 6 + 4 //between 4 and 9
+        val gridWidth = width % 10
         val em = executionModes((Math.abs(execModePar % executionModes.size)))
         val myAlgorithm = simpleAlgorithms((Math.abs(algorithmNumber % simpleAlgorithms.size)))
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
@@ -141,7 +141,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
           domainSize = numberOfColors,
           executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000), //1000000),
           runNumber = runId,
-          aggregationInterval = myAggregationInterval, //,
+          aggregationInterval = myAggregationInterval, 
           fullHistoryStats = myFullHistory,
           revision = "-1",
           evaluationDescription = evalName).runAlgorithm)
