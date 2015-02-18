@@ -75,21 +75,17 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
 
     override def scoreSignal: Double = {
       if (edgesModifiedSinceSignalOperation) {
-        println("SignalCollectAlgorithmBridge.scoreSignal: edgesModified")
         1
       } else {
         lastSignalState match {
           case Some(oldState) => {
             if (isStateUnchanged(oldState, state) && isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue))) {
-              println("SignalCollectAlgorithmBridge.scoreSignal: No Signal for state " + state)
               0
             } else {
-              println("SignalCollectAlgorithmBridge.scoreSignal: "+state.agentId + "-> unchanged? "+isStateUnchanged(oldState, state)+" converged? "+ isConverged(state) + " converged last step? "+isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)))
               1
             }
           }
           case noStateOrStateChanged => {
-            println("SignalCollectAlgorithmBridge.scoreSignal: noState")            
             1
           }
         }

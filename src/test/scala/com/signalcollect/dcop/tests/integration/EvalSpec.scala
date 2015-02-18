@@ -89,7 +89,6 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
         evaluation.execute
 
-        println("The results")
         for (res <- results) {
           assert(res.getOrElse("terminationReason", "NotDetected") == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
