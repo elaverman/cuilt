@@ -318,7 +318,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (graphSize.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
       runResult += s"evaluationDescription" -> evaluationDescription //
       runResult += s"optimizer" -> algorithmName //
-      runResult += s"utility" -> utility.toString
+      runResult += s"utility" -> utility.toString.replace(".", ",")
       runResult += s"domainSize" -> domainSize.toString
       runResult += s"graphSize" -> graphSize.toString //
       runResult += s"numberOfEdges" -> numberOfEdges.toString //
@@ -326,11 +326,11 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"conflictCount" -> conflictCount.toString //
       runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
       runResult += s"isNe" -> isNe.toString //
-      runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString // Measure (1)
-      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString // Measure (2)
+      runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString.replace(".", ",") // Measure (1)
+      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString.replace(".", ",")// Measure (2)
       runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
       runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
-      runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString // Measure (5)
+      runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString.replace(".", ",") // Measure (5)
       runResult += s"revision" -> revision
       runResult += s"aggregationInterval" -> aggregationInterval.toString
       runResult += s"run" -> runNumber.toString
@@ -338,15 +338,15 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"timeLimit" -> executionConfig.timeLimit.toString
       runResult += s"graphStructure" -> evaluationGraph.toString //
 
-      runResult += s"computationTimeInMilliseconds" -> executionTime.toString //
+      runResult += s"computationTimeInMilliseconds" -> executionTime.toString.replace(".", ",") //
       runResult += s"date" -> date.toString //
       runResult += s"executionHostname" -> java.net.InetAddress.getLocalHost.getHostName //
       runResult += s"numberOfCollectSteps" -> stats.executionStatistics.collectSteps.toString //
       runResult += s"numberOfSignalSteps" -> stats.executionStatistics.signalSteps.toString //
       runResult += s"computationTime" -> stats.executionStatistics.computationTime.toString //
       runResult += s"terminationReason" -> stats.executionStatistics.terminationReason.toString //
-      runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString // 
-      runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString //
+      runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString.replace(".", ",") // 
+      runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString.replace(".", ",") //
 
       var a: Array[Long] = new Array(conflictsHistory.size)
       conflictsHistory.foreach(x => { a(x._1) = x._2 })
