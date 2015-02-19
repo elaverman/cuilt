@@ -7,7 +7,7 @@ import com.signalcollect.configuration.ExecutionMode
 
 
 
-class Dsa(changeProbabilityParam: Double) extends IntAlgorithm
+class DsaA(changeProbabilityParam: Double) extends IntAlgorithm
   with SimpleState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
@@ -17,6 +17,18 @@ class Dsa(changeProbabilityParam: Double) extends IntAlgorithm
   with SignalCollectAlgorithmBridge 
   with Execution {
   def changeProbability = changeProbabilityParam
-  def algorithmName = "Dsa"+changeProbabilityParam
+  def algorithmName = "DsaA"+changeProbabilityParam
 }
 
+class DsaB(changeProbabilityParam: Double) extends IntAlgorithm
+  with SimpleState
+  with VertexColoringUtility
+  with ParallelRandomAdjustmentSchedule
+  with ArgmaxBDecisionRule
+  with NashEquilibriumConvergence
+  with MemoryLessTargetFunction
+  with SignalCollectAlgorithmBridge 
+  with Execution {
+  def changeProbability = changeProbabilityParam
+  def algorithmName = "DsaB"+changeProbabilityParam
+}
