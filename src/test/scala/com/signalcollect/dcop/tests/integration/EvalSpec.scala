@@ -30,7 +30,7 @@ import com.signalcollect._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.dcop.evaluation._
-import com.signalcollect.dcop.algorithms.Dsa
+import com.signalcollect.dcop.algorithms._
 import com.signalcollect.dcop.modules.IntAlgorithm
 import com.signalcollect.nodeprovisioning.torque.LocalHost
 import java.util.ArrayList
@@ -69,12 +69,12 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         /*********/
 
         val numberOfColors = 4
-        val gridWidth = 2
-        val em = ExecutionMode.PureAsynchronous
-        val myAlgorithm = new Dsa(0.7)
+        val gridWidth = 3
+        val em = ExecutionMode.Synchronous
+        val myAlgorithm = new DsaA(0.2)
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
-        val myAggregationInterval = 100
-        val myFullHistory = false
+        val myAggregationInterval = 1
+        val myFullHistory = true
         
         evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
           graphInstantiator = myGrid,
@@ -90,7 +90,10 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         evaluation.execute
 
         for (res <- results) {
-          assert(res.getOrElse("terminationReason", "NotDetected") == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
+          val isNe = res.getOrElse("isNe", "NotDetected")
+          assert( terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert( !(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -124,7 +127,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         /*********/
 
         val simpleAlgorithms: List[IntAlgorithm with Execution] = List(
-          new Dsa(0.7))
+          new DsaA(0.7))
 
         val numberOfColors = colors % 6 + 4 //between 4 and 9
         val gridWidth = width % 10
@@ -149,7 +152,10 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
         println("The results")
         for (res <- results) {
-          assert(res.getOrElse("terminationReason", "NotDetected") == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
+          val isNe = res.getOrElse("isNe", "NotDetected")
+          assert( terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert( !(isNe == "FALSE" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true

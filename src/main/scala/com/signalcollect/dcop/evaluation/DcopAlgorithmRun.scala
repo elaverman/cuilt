@@ -172,20 +172,20 @@ trait Execution extends SignalCollectAlgorithmBridge {
       }
 
       println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
-      //      val actions = g.aggregate(ActionDetector)
-      //
-      //      var a: Array[Long] = new Array(actions.size)
-      //
-      //      actions.foreach(x => a(x._1) = x._2)
-      //
-      //      val width = math.floor(math.sqrt(a.size)).toInt
-      //
-      //      for (i <- 0 until width) {
-      //        for (j <- 0 until width) {
-      //          print(a(i * width + j) + " ")
-      //        }
-      //        println
-      //      }
+      val actions = g.aggregate(ActionDetector)
+
+      var a: Array[Long] = new Array(actions.size)
+
+      actions.foreach(x => a(x._1) = x._2)
+
+      val width = math.floor(math.sqrt(a.size)).toInt
+
+      for (i <- 0 until width) {
+        for (j <- 0 until width) {
+          print(a(i * width + j) + " ")
+        }
+        println
+      }
 
       steps += 1
       false

@@ -23,16 +23,16 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
   class DcopVertex(
     id: AgentId,
     initialState: State,
-    debug: Boolean = true)
+    debug: Boolean = false)
     extends DataGraphVertex(id, initialState) {
 
     def changeMove(c: State): State = {
       val move = computeMove(c)
       val newConfig = c.withCentralVariableAssignment(move)
       val newState = newConfig
-      if (debug) {
+      //if (debug) {
         println(s"Vertex $id has changed its state from $state to $newState.")
-      }
+      //}
       newState
     }
 
@@ -41,13 +41,13 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
       if (shouldConsiderMove(c)) {
         changeMove(c)
       } else {
-        if (debug) {
+        //if (debug) {
           if (isConverged(c)) {
             println(s"Vertex $id has converged and stays at move of state $c, prior state $state.")
           } else {
             println(s"Vertex $id still NOT converged, stays at move, and has state $c, prior state $state.")
           }
-        }
+       // }
         c
       }
     }
@@ -75,17 +75,21 @@ trait SignalCollectAlgorithmBridge extends Algorithm  {
 
     override def scoreSignal: Double = {
       if (edgesModifiedSinceSignalOperation) {
+        println("SignalCollectAlgorithmBridge.scoreSignal: edgesModified")
         1
       } else {
         lastSignalState match {
           case Some(oldState) => {
             if (isStateUnchanged(oldState, state) && isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue))) {
+              println("SignalCollectAlgorithmBridge.scoreSignal: No Signal for state " + state)
               0
             } else {
+              println("SignalCollectAlgorithmBridge.scoreSignal: "+state.agentId + "-> unchanged? "+isStateUnchanged(oldState, state)+" converged? "+ isConverged(state) + " converged last step? "+isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)))
               1
             }
           }
           case noStateOrStateChanged => {
+            println("SignalCollectAlgorithmBridge.scoreSignal: noState")
             1
           }
         }
