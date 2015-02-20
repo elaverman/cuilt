@@ -56,9 +56,9 @@ object DcopEvaluation extends App {
   val debug = false
 
   /*********/
-  def evalName = s"Kraken DSA"
-  def evalNumber = 2
-  def runs = 5
+  def evalName = s"Kraken Async DSA - aggreg"
+  def evalNumber = 4
+  def runs = 10
   def pure = true
   var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
@@ -67,14 +67,16 @@ object DcopEvaluation extends App {
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??
   val simpleOptimizers: List[IntAlgorithm with Execution] = List(
-    new DsaA(0.8),
-    new DsaA(0.6),
-    new DsaA(0.4),
-    new DsaA(0.2),
-    new DsaB(0.8),
-    new DsaB(0.6),
-    new DsaB(0.4),
-    new DsaB(0.2))
+    new DsaA(1.0),
+    new DsaB(1.0))
+//    new DsaA(0.8),
+//    new DsaA(0.6),
+//    new DsaA(0.4),
+//    new DsaA(0.2),
+//    new DsaB(0.8),
+//    new DsaB(0.6),
+//    new DsaB(0.4),
+//    new DsaB(0.2))
 
   //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
   //  val dimacsGraphNamesList = new java.io.File("dimacsInput").listFiles.filter(x => (x.getName.endsWith("flat1000_76_0.col"))).map(_.getName)
@@ -85,7 +87,7 @@ object DcopEvaluation extends App {
   for (repetitions <- (1 to runs))
     for (numberOfColors <- Set(8,6,4)) {
       for (gridWidth <- Set(1000, 100, 10)) {
-        for (em <- List(ExecutionMode.Synchronous, ExecutionMode.OptimizedAsynchronous)) {
+        for (em <- List(/*ExecutionMode.Synchronous, */ExecutionMode.OptimizedAsynchronous)) {
           for (myOptimizer <- simpleOptimizers) {
 
           val myGrid = new GridInstantiator(myOptimizer, gridWidth, domain = (0 until numberOfColors).toSet)
@@ -96,7 +98,7 @@ object DcopEvaluation extends App {
             domainSize = numberOfColors,
             executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(300000), //1000000),
             runNumber = repetitions,
-            aggregationInterval = 0, //if (em == ExecutionMode.Synchronous) 1 else 100,
+            aggregationInterval = 100, //if (em == ExecutionMode.Synchronous) 1 else 100,
             fullHistoryStats = false,
             revision = getRevision,
             evaluationDescription = evalName).runAlgorithm)
