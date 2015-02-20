@@ -20,20 +20,20 @@
 
 package com.signalcollect.dcop.tests.integration
 
-import scala.util.Random
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.ShouldMatchers
 import org.scalatest.prop.Checkers
-import org.scalacheck.Gen
-import org.scalacheck.Arbitrary
+import scala.math.Ordering.Boolean
+
 import com.signalcollect._
-import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.dcop.evaluation._
 import com.signalcollect.dcop.algorithms._
+import com.signalcollect.dcop.evaluation._
+import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules.IntAlgorithm
 import com.signalcollect.nodeprovisioning.torque.LocalHost
-import java.util.ArrayList
 
 class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
@@ -92,8 +92,8 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
           assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe == "FALSE" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -101,7 +101,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "Dsa" should "converge in an overconstrained 3x3 grid in async mode in less than 5 seconds" in {
+  "Dsa" should "converge in an overconstrained grid in async mode in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -121,13 +121,13 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
         /*********/
 
-        val numberOfColors = 3
-        val gridWidth = 3
+        val numberOfColors = 1
+        val gridWidth = 5
         val em = ExecutionMode.OptimizedAsynchronous
         val myAlgorithm = new DsaB(1.0)
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
-        val myAggregationInterval = 1
-        val myFullHistory = true
+        val myAggregationInterval = 100
+        val myFullHistory = false
 
         evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
           graphInstantiator = myGrid,
@@ -141,12 +141,12 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
           evaluationDescription = evalName).runAlgorithm)
 
         evaluation.execute
-
+        
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          // assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -198,8 +198,8 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
           assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -255,8 +255,8 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did converge but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
           assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe == "FALSE" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
