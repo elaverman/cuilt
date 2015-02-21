@@ -35,7 +35,7 @@ object DcopEvaluation extends App {
   //    coresPerNode = 10,
   //    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
-  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationMassiveMAS", "data")
+  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationMassiveMAS", "data2")
   // val mySql = new MySqlResultHandler(args(2), args(3), args(4))
 
   def getRevision: String = {
@@ -56,8 +56,8 @@ object DcopEvaluation extends App {
   val debug = false
 
   /*********/
-  def evalName = s"Kraken Sync DSA"
-  def evalNumber = 5
+  def evalName = s"Kraken Async Dsan, Jsfpi, Wrmi"
+  def evalNumber = 6
   def runs = 10
   def pure = true
   var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
@@ -67,16 +67,23 @@ object DcopEvaluation extends App {
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??
   val simpleOptimizers: List[IntAlgorithm with Execution] = List(
+      new Dsan(1.0, 1000, 2),
+      new Dsan(1.0, 1, 2),
+      new Jsfpi(1.0),
+      new Wrmi(1.0, 0.2),
+      new Wrmi(1.0, 0.4),
+      new Wrmi(1.0, 0.6),
+      new Wrmi(1.0, 0.8))
 //    new DsaA(1.0),
 //    new DsaB(1.0))
-    new DsaA(0.8),
-    new DsaA(0.6),
-    new DsaA(0.4),
-    new DsaA(0.2),
-    new DsaB(0.8),
-    new DsaB(0.6),
-    new DsaB(0.4),
-    new DsaB(0.2))
+//    new DsaA(0.8),
+//    new DsaA(0.6),
+//    new DsaA(0.4),
+//    new DsaA(0.2),
+//    new DsaB(0.8),
+//    new DsaB(0.6),
+//    new DsaB(0.4),
+//    new DsaB(0.2))
 
   //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
   //  val dimacsGraphNamesList = new java.io.File("dimacsInput").listFiles.filter(x => (x.getName.endsWith("flat1000_76_0.col"))).map(_.getName)
@@ -87,7 +94,7 @@ object DcopEvaluation extends App {
   for (repetitions <- (1 to runs))
     for (numberOfColors <- Set(8,6,4)) {
       for (gridWidth <- Set(1000, 100, 10)) {
-        for (em <- List(ExecutionMode.Synchronous/*, ExecutionMode.OptimizedAsynchronous*/)) {
+        for (em <- List(/*ExecutionMode.Synchronous,*/ ExecutionMode.OptimizedAsynchronous)) {
           for (myOptimizer <- simpleOptimizers) {
 
           val myGrid = new GridInstantiator(myOptimizer, gridWidth, domain = (0 until numberOfColors).toSet)

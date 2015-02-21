@@ -29,19 +29,21 @@ import org.scalacheck.Arbitrary
 import com.signalcollect._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.dcop.algorithms._
 
 class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
 
   var runId = 0
   val executionModes = List(ExecutionMode.OptimizedAsynchronous, /*ExecutionMode.PureAsynchronous,*/ ExecutionMode.Synchronous)
+  val algorithms = List(new DsaA(0.7), new DsaB(0.7), new Dsan(0.6, 1000, 2))
 
   //    lazy val smallWidth = Gen.chooseNum(1, 10)//.map(Width(_))
   //  implicit def arbSmallWidth[Int] = Arbitrary(smallWidth)
   implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 200))
 
-  "VertexColoringAlgorithm" should "correctly assign colors to a 2 vertex graph" in {
+  "A vertexColoringAlgorithm" should "correctly assign colors to a 2 vertex graph" in {
     check(
-      (execModePar: Int) => {
+      (execModePar: Int, algorithmPar: Int) => {
         runId += 1
         val g = GraphBuilder.build
         try {
