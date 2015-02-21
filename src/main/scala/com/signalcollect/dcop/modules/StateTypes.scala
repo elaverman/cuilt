@@ -8,7 +8,7 @@ trait StateModule extends Algorithm {
   type State <: StateInterface
 
   def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State
-  
+
   trait StateInterface extends StateType {
     def agentId: AgentId
     def centralVariableValue: Action
@@ -119,7 +119,7 @@ trait SimpleMemoryState extends StateWithMemory {
       this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
     }
     def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
-      this.copy(memory = newMemory).asInstanceOf[this.type]
+      this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
     }
   }
 }

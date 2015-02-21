@@ -46,4 +46,16 @@ class Dsan(changeProbabilityParam: Double, constant: Double, kval: Double) exten
   def algorithmName = "Dsan" + changeProbabilityParam + "const" + constant + "k" + kval
 }
 
+class Jsfpi(changeProbabilityParam: Double) extends IntAlgorithm
+  with SimpleMemoryState
+  with VertexColoringUtility
+  with ParallelRandomAdjustmentSchedule
+  with ArgmaxADecisionRule
+  with NashEquilibriumConvergence
+  with AverageExpectedUtilityTargetFunction
+  with SignalCollectAlgorithmBridge
+  with Execution {
+  def changeProbability = changeProbabilityParam
+  def algorithmName = "Jsfpi" + changeProbabilityParam
+}
 
