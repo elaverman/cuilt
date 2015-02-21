@@ -42,3 +42,17 @@ trait AverageExpectedUtilityTargetFunction extends TargetFunction with StateWith
   }
 }
 
+trait DiscountedAverageRegretsTargetFunction extends AverageExpectedUtilityTargetFunction {
+
+  def rho: Double
+
+  /*
+   * All regrets are minimum 0.
+   */
+  override def computeExpectedUtilities(conf: State) = {
+    val configUtilities = computeCandidates(conf).map(c =>
+      (c.centralVariableValue, rho * (math.max(computeUtility(c) - computeUtility(conf), 0)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
+    configUtilities
+  }
+}
+

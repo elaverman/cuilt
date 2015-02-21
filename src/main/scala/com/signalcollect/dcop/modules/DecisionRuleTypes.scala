@@ -99,3 +99,27 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
   }
 
 }
+
+trait LinearProbabilisticDecisionRule extends DecisionRule {
+
+
+  /*
+   * In the case where we have a flat distribution and normFactor would be 0, the function should return the first action. 
+   */
+  override def computeMove(c: State): Action = {
+    val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+    val normFactor = expectedUtilities.values.sum
+    val selectionProb = Random.nextDouble
+
+    var partialSum: Double = 0.0
+    for (action <- expectedUtilities.keys) {
+      partialSum += expectedUtilities(action)
+      if (selectionProb * normFactor <= partialSum) {
+        return action
+      }
+    }
+    throw new Exception("This code should be unreachable.")
+  }
+
+}
+

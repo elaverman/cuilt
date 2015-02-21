@@ -51,7 +51,7 @@ class Jsfpi(changeProbabilityParam: Double) extends IntAlgorithm
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
   with ArgmaxADecisionRule
-  with NashEquilibriumConvergence
+  with NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
   with AverageExpectedUtilityTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {
@@ -59,3 +59,16 @@ class Jsfpi(changeProbabilityParam: Double) extends IntAlgorithm
   def algorithmName = "Jsfpi" + changeProbabilityParam
 }
 
+class Wrmi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgorithm
+  with SimpleMemoryState
+  with VertexColoringUtility
+  with ParallelRandomAdjustmentSchedule
+  with LinearProbabilisticDecisionRule
+  with NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
+  with DiscountedAverageRegretsTargetFunction
+  with SignalCollectAlgorithmBridge
+  with Execution {
+  def changeProbability = changeProbabilityParam
+  def rho = rhoParam
+  def algorithmName = "Wrmi" + changeProbabilityParam+ "rhoValue" + rho
+}
