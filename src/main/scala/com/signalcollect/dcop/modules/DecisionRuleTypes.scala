@@ -16,8 +16,8 @@ trait DecisionRule extends Algorithm {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
     val maxUtility = expectedUtilities.values.max
     val res = isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)
-//    if (!res) 
-//      println("###"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
+    //    if (!res) 
+    //      println("###"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
     res
   }
 
@@ -70,6 +70,31 @@ trait ArgmaxBDecisionRule extends DecisionRule {
     } else {
       val chosenMaxUtilityMove = maxUtilityMoves(Random.nextInt(maxUtilityMoves.size))
       chosenMaxUtilityMove
+    }
+  }
+
+}
+
+trait SimulatedAnnealingDecisionRule extends DecisionRule {
+
+  def const: Double
+  def k: Double
+  var iteration = 0
+
+  def eta(i: Int) = const / i * i
+  var deltaComp = 0.0
+
+  override def computeMove(c: State) = {
+    iteration += 1
+    val randomMove = c.domain.toSeq(Random.nextInt(c.domain.size))
+    val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
+    val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
+    deltaComp = delta
+    val probab = if (delta == 0) 0.001 else scala.math.exp(delta * iteration * iteration / 1000) //delta / eta(iteration))
+    if (delta > 0 || (delta <= 0 && Random.nextDouble <= probab)) {
+      randomMove
+    } else {
+      c.centralVariableValue
     }
   }
 
