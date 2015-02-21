@@ -171,7 +171,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
         extraStats.updateTimeToFirstLocOptimum(steps)
       }
 
-      println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
+      //println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
       val actions = g.aggregate(ActionDetector)
 
       var a: Array[Long] = new Array(actions.size)
@@ -180,12 +180,12 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       val width = math.floor(math.sqrt(a.size)).toInt
 
-      for (i <- 0 until width) {
-        for (j <- 0 until width) {
-          print(a(i * width + j) + " ")
-        }
-        println
-      }
+//      for (i <- 0 until width) {
+//        for (j <- 0 until width) {
+//          print(a(i * width + j) + " ")
+//        }
+//        println
+//      }
 
       steps += 1
       false

@@ -154,7 +154,7 @@ class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "Dsa" should "converge in a 2x2 grid in Sync mode with high inertia condition in less than 5 seconds" in {
+  "Dsa" should "converge in a 3x3 grid in Sync mode with high inertia condition in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
