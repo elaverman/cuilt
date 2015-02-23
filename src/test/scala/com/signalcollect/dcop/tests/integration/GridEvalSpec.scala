@@ -35,7 +35,7 @@ import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules.IntAlgorithm
 import com.signalcollect.nodeprovisioning.torque.LocalHost
 
-class EvalSpec extends FlatSpec with ShouldMatchers with Checkers {
+class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
   var runId = 0
   val executionModes = List(ExecutionMode.OptimizedAsynchronous, ExecutionMode.PureAsynchronous, ExecutionMode.Synchronous)

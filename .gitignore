@@ -18,3 +18,5 @@ inputs/*
 *.sh
 
 diagrams/dcop-algorithms-diagram.graffle
+
+inputGraphs/*

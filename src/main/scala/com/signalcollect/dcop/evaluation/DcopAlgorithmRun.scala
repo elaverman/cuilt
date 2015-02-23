@@ -178,14 +178,19 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       actions.foreach(x => a(x._1) = x._2)
 
-      val width = math.floor(math.sqrt(a.size)).toInt
-
-//      for (i <- 0 until width) {
-//        for (j <- 0 until width) {
-//          print(a(i * width + j) + " ")
-//        }
-//        println
+//      for (i <- 0 until a.size) {
+//        print(a(i) + " ")
 //      }
+//      println
+
+      //      val width = math.floor(math.sqrt(a.size)).toInt
+      //
+      //      for (i <- 0 until width) {
+      //        for (j <- 0 until width) {
+      //          print(a(i * width + j) + " ")
+      //        }
+      //        println
+      //      }
 
       steps += 1
       false
@@ -327,7 +332,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
       runResult += s"isNe" -> isNe.toString //
       runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString.replace(".", ",") // Measure (1)
-      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString.replace(".", ",")// Measure (2)
+      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString.replace(".", ",") // Measure (2)
       runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
       runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
       runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString.replace(".", ",") // Measure (5)
