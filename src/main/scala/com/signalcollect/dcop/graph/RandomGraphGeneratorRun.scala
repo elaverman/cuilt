@@ -1,28 +1,42 @@
+/*
+ *  @author Mihaela Verman
+ *  
+ *  Copyright 2015 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
 package com.signalcollect.dcop.graph
 
 import java.io.FileWriter
 import scala.math.Ordering.Boolean
 import scala.util.Random
 
-/*
-1. A chromatic number is chosen, and then each vertex of the graph is given a random colour label, 
-with the number of colours being the chromatic number.  
-The results in the JAAMAS paper were for graphs with chromatic numbers from 3 to 5.
+/**
+ * The runAlgorithm() method calls the generate method for the needed graphs.
+ * 
+ * 1. All vertices are assigned a random color from the domain. (from 0 to the chromatic number-1)
+ *
+ * 2. Until we attain the desired number of edges (numberOfVertices * edgeDensity), we randomly create edges
+ * between vertices with compatible colors (non-equal). An edge in Signal/Collect is directed, so we need to create two edges.  
+ *
+ * 3. For every independent (unconnected) vertex we search for an edge between a future pair vertex and another vertex
+ * that has at least one other neighbor. 
+ * A pair is a non-independent vertex of compatible colour. We delete the old edge and create a new edge between the initial
+ * vertex and the pair.
+ */
 
-2. Links between nodes are proposed at random, and are accepted if the two connecting 
-nodes are of different colours.  This step was iterated until an average edge density threshold 
-was passed, and in the paper I have stated that this value was 3 
-- I trust that is correct -but I had evaulated a range from 2 up to 8 or 10, 
-where the very dense graphs caused the algorithms I was testing to run very slowly (there were many local optima).
-
-3. Each graph was checked to see if it contained any independent vertices (unconnected nodes), 
-and those that did were discarded.
-
-Steps 2 and 3 were repeated until enough graphs were generated. 
-This produced a batch of graphs with known upper bounds on their chromatic number.
-*/
-
-case class GraphGeneratorRun() extends Serializable {
+case class RandomGraphGeneratorRun() extends Serializable {
 
   def runAlgorithm(): List[Map[String, String]] = {
 
@@ -46,7 +60,6 @@ case class GraphGeneratorRun() extends Serializable {
     }
 
     finalResults
-
   }
 
   def generate(numberOfVertices: Int, edgeDensity: Int, numberOfColors: Int, fileName: String) = {

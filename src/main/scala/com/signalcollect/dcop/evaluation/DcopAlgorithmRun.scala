@@ -1,3 +1,23 @@
+/*
+ *  @author Philip Stutz
+ *  @author Mihaela Verman
+ *  
+ *  Copyright 2015 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
+
 package com.signalcollect.dcop.evaluation
 
 import com.signalcollect.dcop.graph._
@@ -178,10 +198,10 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       actions.foreach(x => a(x._1) = x._2)
 
-//      for (i <- 0 until a.size) {
-//        print(a(i) + " ")
-//      }
-//      println
+      //      for (i <- 0 until a.size) {
+      //        print(a(i) + " ")
+      //      }
+      //      println
 
       //      val width = math.floor(math.sqrt(a.size)).toInt
       //
@@ -239,15 +259,14 @@ trait Execution extends SignalCollectAlgorithmBridge {
     }
 
     def runAlgorithm(): List[Map[String, String]] = {
-      
-      println("Time"+System.nanoTime())
+
+      println("Time" + System.nanoTime())
 
       val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
-      
-      println("Graph is "+graphInstantiator)
+      println("Graph is " + graphInstantiator)
       println("Starting.")
-      println("Time"+System.nanoTime())
+      println("Time" + System.nanoTime())
 
       var computeRanks = false
 

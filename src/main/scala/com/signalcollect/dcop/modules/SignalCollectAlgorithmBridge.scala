@@ -1,7 +1,31 @@
+/*
+ *  @author Philip Stutz
+ *  @author Mihaela Verman
+ *  
+ *  Copyright 2015 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
+
 package com.signalcollect.dcop.modules
 
 import com.signalcollect._
 import com.signalcollect.Vertex
+
+/**
+ * The bridge has methods for creating a vertex and an edge, and provides the implementations for them.
+ */
 
 trait SignalCollectAlgorithmBridge extends Algorithm {
 
@@ -21,6 +45,18 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
    * @param id The Vertex Id
    * @param initialState Initial state of the vertex
    * @param debug Boolean indicating if there should be any printlines
+   *
+   * First, the vertex checks the scoreSignal function and if the result is 1, it calls
+   * executeSignalOperation.
+   * Afterwards, it calls deliverSignalWithSrcId. The standard implementation updates the mostRecentSignalMap.
+   * Then, it calls the scoreCollect function, which returns 1 is the mostRecentSignalMap is not empty or if 
+   * the edges connected to the vertex were modified. If scoreCollect returns 1, then the collect function
+   * is executed. 
+   * The operations are repeated until convergence is detected.
+   * 
+   * If a vertex should change its state but doesn't (one such case is when it is impacted by inertia),
+   * the vertex needs to send a message to itself in order to ensure a next collect and that convergence
+   * would not be falsely detected. 
    */
   class DcopVertex(
     id: AgentId,
@@ -65,17 +101,13 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
      */
     override def executeSignalOperation(graphEditor: GraphEditor[Any, Any]) {
       if (sendMessageToMyself) {
-        //println(s"$id: Sending message to myself??")
         graphEditor.sendSignal(ENSURE_COLLECT_MSG, id, id)
-      } else {
-        //println(s"$id: NOT sending message to myself.")
       }
       super.executeSignalOperation(graphEditor)
     }
 
     override def deliverSignalWithSourceId(signal: Any, sourceId: Any, graphEditor: GraphEditor[Any, Any]): Boolean = {
       if (sourceId == id) {
-        //println(s"$id: Receiving message from myself??")
         if (signal == ENSURE_COLLECT_MSG) {
           ensureCollect = true
         } else {
@@ -87,15 +119,11 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
       }
     }
 
-    //    override def scoreCollect = {
-    //      if (ensureCollect) {
-    //        println(s"collect ensured for agent $id")
-    //        1
-    //      } else {
-    //        super.scoreCollect
-    //      }
-    //    }
-
+    /*
+     * The collect function describes the way in which a vertex modifies its state based on
+     * the signals it newly received, and returns the new state. In this context, it ties up the different
+     * algorithm components.
+     */
     def collect = {
       val c = updatedState
       if (shouldConsiderMove(c)) {
@@ -110,7 +138,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
         } else {
           //println(s"Vertex $id still NOT converged, stays at move, and has state $c, prior state $state.")
           sendMessageToMyself = true
-          c //.withExpectedChange
+          c
         }
       }
     }
@@ -146,6 +174,11 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
   }
 
+  /**
+   * A Dcop edge.
+   *
+   * @param targetId  The Id of the target vertex
+   */
   class DcopEdge(targetId: AgentId) extends DefaultEdge[AgentId](targetId) {
     type Source = DcopVertex
 

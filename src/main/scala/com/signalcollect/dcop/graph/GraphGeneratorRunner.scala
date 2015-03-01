@@ -1,3 +1,21 @@
+/*
+ *  @author Mihaela Verman
+ *  
+ *  Copyright 2015 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
 package com.signalcollect.dcop.graph
 
 import java.io.File
@@ -13,6 +31,10 @@ import com.signalcollect.nodeprovisioning.torque.TorquePriority
 import com.signalcollect.dcop.modules._
 import com.signalcollect.dcop.algorithms._
 import com.signalcollect.dcop.evaluation._
+
+/**
+ * Creates the text files for the graphs on the given host. 
+ */
 
 object GraphGeneratorRunner extends App {
 
@@ -36,22 +58,6 @@ object GraphGeneratorRunner extends App {
   //    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
 
-  def getRevision: String = {
-    try {
-      val gitLogPath = ".git/logs/HEAD"
-      val gitLog = new File(gitLogPath)
-      val lines = Source.fromFile(gitLogPath).getLines
-      val lastLine = lines.toList.last
-      val revision = lastLine.split(" ")(1)
-      revision
-    } catch {
-      case t: Throwable => "Unknown revision."
-    }
-  }
-
-  def randomFromDomain(domain: Set[Int]) = domain.toSeq(Random.nextInt(domain.size))
-  def zeroInitialized(domain: Set[Int]) = 0
-  val debug = false
 
   /*********/
   def evalName = s"Graph generator"
@@ -63,7 +69,7 @@ object GraphGeneratorRunner extends App {
 //      var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)//.addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
-  evaluation = evaluation.addEvaluationRun(GraphGeneratorRun().runAlgorithm)
+  evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun().runAlgorithm)
 
   evaluation.execute
 

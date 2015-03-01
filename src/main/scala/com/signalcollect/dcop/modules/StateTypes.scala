@@ -1,7 +1,29 @@
+/*
+ *  @author Philip Stutz
+ *  @author Mihaela Verman
+ *  
+ *  Copyright 2015 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
+
 package com.signalcollect.dcop.modules
 
 /**
  * State implementations.
+ * 
+ * A state module extends Algorithm and it provides a method to create an initial state and a state implementation.
  */
 
 trait StateModule extends Algorithm {
@@ -36,18 +58,10 @@ trait StateModule extends Algorithm {
             case (action: Action, metadata: NeighborMetadata) =>
               metadataEncountered = true
               (key, action)
-            case other => throw new Exception(s"blah blah state could not handle sifgnal blah")
+            case other => throw new Exception(s"State could not handle signal.")
           }
       }
 
-      //      if (metadataEncountered) {
-      //        val metadataMap = n.map {
-      //          case (key, value) =>
-      //            value match {
-      //              case (action, metadata: NeighborMetadata) => (key, metadata)
-      //            }
-      //        }
-      //      }
       this.withUpdatedNeighborActions(actionMap)
 
     }
@@ -109,7 +123,7 @@ trait SimpleMemoryState extends StateWithMemory {
     domain: Set[Action],
     neighborActions: Map[AgentId, Action],
     memory: Map[Action, UtilityType],
-    numberOfCollects: Long //to rename to numberOfUpdates and check
+    numberOfCollects: Long //TODO: rename to numberOfUpdates and check
     ) extends StateWithMemoryInterface {
 
     def withCentralVariableAssignment(value: Action) = {
