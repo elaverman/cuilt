@@ -42,7 +42,7 @@ trait AverageExpectedUtilityTargetFunction extends TargetFunction with StateWith
   }
 }
 
-trait DiscountedAverageRegretsTargetFunction extends AverageExpectedUtilityTargetFunction {
+trait DiscountedAverageRegretsTargetFunction extends TargetFunction with StateWithMemory {
 
   def rho: Double
 
@@ -51,8 +51,15 @@ trait DiscountedAverageRegretsTargetFunction extends AverageExpectedUtilityTarge
    */
   override def computeExpectedUtilities(conf: State) = {
     val configUtilities = computeCandidates(conf).map(c =>
-      (c.centralVariableValue, rho * (math.max(computeUtility(c) - computeUtility(conf), 0)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
+      (c.centralVariableValue, math.max(0, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue)))).toMap
     configUtilities
   }
+  
+  def updateMemory(conf: State): State = {
+    val newMemory = computeCandidates(conf).map(c =>
+      (c.centralVariableValue, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
+    conf.withUpdatedMemory(newMemory)
+  }
+  
 }
 

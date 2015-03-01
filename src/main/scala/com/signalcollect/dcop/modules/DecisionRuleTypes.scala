@@ -81,7 +81,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
   def k: Double
   var iteration = 0
 
-  def eta(i: Int) = const / i * i
+  def etaInverse(i: Int) =  i * i /const
   var deltaComp = 0.0
 
   override def computeMove(c: State) = {
@@ -90,7 +90,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
     val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
     val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
     deltaComp = delta
-    val probab = if (delta == 0) 0.001 else scala.math.exp(delta * iteration * iteration / 1000) //delta / eta(iteration))
+    val probab = if (delta == 0) 0.001 else scala.math.exp(delta *  etaInverse(iteration))
     if (delta > 0 || (delta <= 0 && Random.nextDouble <= probab)) {
       randomMove
     } else {
