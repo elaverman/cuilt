@@ -239,10 +239,15 @@ trait Execution extends SignalCollectAlgorithmBridge {
     }
 
     def runAlgorithm(): List[Map[String, String]] = {
+      
+      println("Time"+System.nanoTime())
 
       val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
+      
+      println("Graph is "+graphInstantiator)
       println("Starting.")
+      println("Time"+System.nanoTime())
 
       var computeRanks = false
 
@@ -341,7 +346,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"run" -> runNumber.toString
       runResult += s"stepsLimit" -> executionConfig.stepsLimit.toString
       runResult += s"timeLimit" -> executionConfig.timeLimit.toString
-      runResult += s"graphStructure" -> evaluationGraph.toString //
+      runResult += s"graphStructure" -> graphInstantiator.toString //
 
       runResult += s"computationTimeInMilliseconds" -> executionTime.toString.replace(".", ",") //
       runResult += s"date" -> date.toString //

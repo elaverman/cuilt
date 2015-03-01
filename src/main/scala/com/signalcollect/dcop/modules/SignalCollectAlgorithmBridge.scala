@@ -14,8 +14,6 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
   }
 
   val ENSURE_COLLECT_MSG = -2
-  
-  
 
   /**
    * A Dcop vertex.
@@ -32,7 +30,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
     var ensureCollect = false
     var sendMessageToMyself = false
-    
+
     override def scoreSignal: Double = {
       if (sendMessageToMyself) {
         //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): Send messageBack " + state + " msgBack? " + sendMessageToMyself)
@@ -48,7 +46,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
                 //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): No Signal for state " + state + " msgBack? " + sendMessageToMyself)
                 0
               } else {
-                //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): " + state.agentId + "-> unchanged? " + isStateUnchanged(oldState, state) + " converged? " + isConverged(state) + " converged last step? " + isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)) + " msgBack? " + sendMessageToMyself)
+                //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): " + state.agentId + "-> unchanged? " + isStateUnchanged(oldState, state) + " " + oldState + " " + state + " converged? " + isConverged(state) + " converged last step? " + isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)) + " msgBack? " + sendMessageToMyself)
                 1
               }
             }
@@ -133,8 +131,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
     def isStateUnchanged(oldState: State, newState: State): Boolean = {
       oldState.centralVariableValue == newState.centralVariableValue &&
-        oldState.neighborActions == newState.neighborActions // &&
-      //oldState.changeCounter == newState.changeCounter
+        oldState.neighborActions == newState.neighborActions
     }
 
     def changeMove(c: State): State = {
@@ -142,7 +139,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
       val newConfig = c.withCentralVariableAssignment(move)
       val newState = newConfig
       //if (debug) {
-       // println(s"Vertex $id has changed its state from $state to $newState.")
+      // println(s"Vertex $id has changed its state from $state to $newState.")
       //}
       newState
     }
