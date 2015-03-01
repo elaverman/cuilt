@@ -35,7 +35,7 @@ object DcopEvaluation extends App {
   //    coresPerNode = 10,
   //    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
-  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationMassiveMASAggreg", "data")
+  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationMassiveMASRandGraph", "bigGrid")
   // val mySql = new MySqlResultHandler(args(2), args(3), args(4))
 
   def getRevision: String = {
@@ -56,9 +56,9 @@ object DcopEvaluation extends App {
   val debug = false
 
   /*********/
-  def evalName = s"Kraken Sync Dsa, Dsan, Jsfpi aggreg"
-  def evalNumber = 8
-  def runs = 5
+  def evalName = s"Kraken grid all"
+  def evalNumber = 21
+  def runs = 10
   def pure = true
   var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
@@ -67,17 +67,113 @@ object DcopEvaluation extends App {
 
   //TODO Why do we have the probl since we SimpleConfig used by DsaAVC extends Configuration??
   val simpleOptimizers: List[IntAlgorithm with Execution] = List(
+    //    new Dsan(0.2, 1000, 2),
+    //    new Dsan(0.2, 1, 2),
+    //    new Jsfpi(0.2),
+    //    new Dsan(0.4, 1000, 2),
+    //    new Dsan(0.4, 1, 2),
+    //    new Jsfpi(0.4),
+    //    new Dsan(0.6, 1000, 2),
+    //    new Dsan(0.6, 1, 2),
+    //    new Jsfpi(0.6),
+    //    new Dsan(0.8, 1000, 2),
+    //    new Dsan(0.8, 1, 2),
+    //    new Jsfpi(0.8))
+    //        new DsaA(0.8),
+    //        new DsaA(0.6),
+    //        new DsaA(0.4),
+    //        new DsaA(0.2),
+    //        new DsaB(0.8),
+    //        new DsaB(0.6),
+    //        new DsaB(0.4))
+    //        new DsaB(0.2))
+
+    //    new Dsan(0.2, 1000, 2),
+    //    new Dsan(0.2, 1, 2),
+    //    new Jsfpi(0.2),
+    new Wrmi(0.2, 0.2),
+    new Wrmi(0.2, 0.4),
+    new Wrmi(0.2, 0.6),
+    new Wrmi(0.2, 0.8),
+    //    new Dsan(0.4, 1000, 2),
+    //    new Dsan(0.4, 1, 2),
+    //    new Jsfpi(0.4),
+    new Wrmi(0.4, 0.2),
+    new Wrmi(0.4, 0.4),
+    new Wrmi(0.4, 0.6),
+    new Wrmi(0.4, 0.8),
+    //    new Dsan(0.6, 1000, 2),
+    //    new Dsan(0.6, 1, 2),
+    //    new Jsfpi(0.6),
+    new Wrmi(0.6, 0.2),
+    new Wrmi(0.6, 0.4),
+    new Wrmi(0.6, 0.6),
+    new Wrmi(0.6, 0.8),
+    //    new Dsan(0.8, 1000, 2),
+    //    new Dsan(0.8, 1, 2),
+    //    new Jsfpi(0.8),
+    new Wrmi(0.8, 0.2),
+    new Wrmi(0.8, 0.4),
+    new Wrmi(0.8, 0.6),
+    new Wrmi(0.8, 0.8))
+
+  //    new Dsan(1.0, 1000, 2),
+  //    new Dsan(1.0, 1, 2),
+  //    new Jsfpi(1.0),
+  //              new Wrmi(1.0, 0.2),
+  //              new Wrmi(1.0, 0.4),
+  //              new Wrmi(1.0, 0.6),
+  //              new Wrmi(1.0, 0.8))
+  //    new DsaA(1.0),
+  //    new DsaB(1.0))
+  //        new DsaA(0.8),
+  //        new DsaA(0.6),
+  //        new DsaA(0.4),
+  //        new DsaA(0.2),
+  //        new DsaB(0.8),
+  //        new DsaB(0.6),
+  //        new DsaB(0.4),
+  //        new DsaB(0.2))
+
+  //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
+  //  val dimacsGraphNamesList = new java.io.File("dimacsInput").listFiles.filter(x => (x.getName.endsWith("flat1000_76_0.col"))).map(_.getName)
+
+  def initial0Value = 0
+
+  var graphs: List[String] = List()
+
+  //  val numbersOfVertices = Set(10, 100, 1000, 10000, 100000, 1000000, 10000000)
+  //  val edgeDensities = Set(3)
+  //  val numbersOfColors = Set(3)
+  //  val numberOfGraphs = 3
+
+  val numbersOfVertices = Set(10, 100, 1000, 10000, 100000, 1000000)
+  val edgeDensities = Set(3)
+  val numbersOfColors = Set(5) //Set(3)
+  val numberOfGraphs = 3
+
+  //  for (graphNumber <- 0 until numberOfGraphs) {
+  //    for (numberOfVertices <- numbersOfVertices) {
+  //      for (edgeDensity <- edgeDensities) {
+  //        for (numberOfColors <- numbersOfColors) {
+  //          //graphs = s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt" :: graphs
+  //        }
+  //      }
+  //    }
+  //  }
+
+  val simpleOptimizersSync: List[IntAlgorithm with Execution] = List(
     new Dsan(0.2, 1000, 2),
     new Dsan(0.2, 1, 2),
-    new Jsfpi(0.2),
     new Dsan(0.4, 1000, 2),
     new Dsan(0.4, 1, 2),
-    new Jsfpi(0.4),
     new Dsan(0.6, 1000, 2),
     new Dsan(0.6, 1, 2),
-    new Jsfpi(0.6),
     new Dsan(0.8, 1000, 2),
     new Dsan(0.8, 1, 2),
+    new Jsfpi(0.2),
+    new Jsfpi(0.4),
+    new Jsfpi(0.6),
     new Jsfpi(0.8),
     new DsaA(0.8),
     new DsaA(0.6),
@@ -87,77 +183,37 @@ object DcopEvaluation extends App {
     new DsaB(0.6),
     new DsaB(0.4),
     new DsaB(0.2))
-  //    new Dsan(0.2, 1000, 2),
-  //    new Dsan(0.2, 1, 2),
-  //    new Jsfpi(0.2),
-  //    new Wrmi(0.2, 0.2),
-  //    new Wrmi(0.2, 0.4),
-  //    new Wrmi(0.2, 0.6),
-  //    new Wrmi(0.2, 0.8),
-  //    new Dsan(0.4, 1000, 2),
-  //    new Dsan(0.4, 1, 2),
-  //    new Jsfpi(0.4),
-  //    new Wrmi(0.4, 0.2),
-  //    new Wrmi(0.4, 0.4),
-  //    new Wrmi(0.4, 0.6),
-  //    new Wrmi(0.4, 0.8),
-  //    new Dsan(0.6, 1000, 2),
-  //    new Dsan(0.6, 1, 2),
-  //    new Jsfpi(0.6),
-  //    new Wrmi(0.6, 0.2),
-  //    new Wrmi(0.6, 0.4),
-  //    new Wrmi(0.6, 0.6),
-  //    new Wrmi(0.6, 0.8),
-  //    new Dsan(0.8, 1000, 2),
-  //    new Dsan(0.8, 1, 2),
-  //    new Jsfpi(0.8),
-  //    new Wrmi(0.8, 0.2),
-  //    new Wrmi(0.8, 0.4),
-  //    new Wrmi(0.8, 0.6),
-  //    new Wrmi(0.8, 0.8)
 
-  //      new Dsan(1.0, 1000, 2),
-  //      new Dsan(1.0, 1, 2),
-  //      new Jsfpi(1.0),
-  //      new Wrmi(1.0, 0.2),
-  //      new Wrmi(1.0, 0.4),
-  //      new Wrmi(1.0, 0.6),
-  //      new Wrmi(1.0, 0.8))
-  //    new DsaA(1.0),
-  //    new DsaB(1.0))
-  //    new DsaA(0.8),
-  //    new DsaA(0.6),
-  //    new DsaA(0.4),
-  //    new DsaA(0.2),
-  //    new DsaB(0.8),
-  //    new DsaB(0.6),
-  //    new DsaB(0.4),
-  //    new DsaB(0.2))
-
-  //  val adoptGraphNamesList = new java.io.File("adoptInput").listFiles.filter(x => (x.getName.startsWith("Problem-GraphColor-40_3_"))).map(_.getName)
-  //  val dimacsGraphNamesList = new java.io.File("dimacsInput").listFiles.filter(x => (x.getName.endsWith("flat1000_76_0.col"))).map(_.getName)
-
-  def initial0Value = 0
+  val simpleOptimizersAsync: List[IntAlgorithm with Execution] = List(
+    new Dsan(0.95, 1000, 2),
+    new Dsan(0.95, 1, 2),
+    new Jsfpi(0.95),
+    new DsaA(0.95),
+    new DsaB(0.95))
 
   for (repetitions <- (1 to runs))
+    //    for (graphNumber <- 0 until numberOfGraphs) {
+    //      for (numberOfVertices <- numbersOfVertices) {
+    //        for (edgeDensity <- edgeDensities) {
+    //          for (numberOfColors <- numbersOfColors) {
     for (numberOfColors <- Set(8, 6, 4)) {
       for (gridWidth <- Set(1000, 100, 10)) {
-        for (em <- List(ExecutionMode.Synchronous /*, ExecutionMode.OptimizedAsynchronous*/ )) {
-          for (myOptimizer <- simpleOptimizers) {
+        for (em <- List(ExecutionMode.Synchronous, ExecutionMode.OptimizedAsynchronous)) {
+          for (myOptimizer <- if (em == ExecutionMode.Synchronous) simpleOptimizersSync else simpleOptimizersAsync) {
 
             val myGrid = new GridInstantiator(myOptimizer, gridWidth, domain = (0 until numberOfColors).toSet)
+            //                val myGraphInstantiator = new RandomGraphReader(myOptimizer, numberOfVertices, edgeDensity, numberOfColors, graphNumber)
 
             evaluation = evaluation.addEvaluationRun(myOptimizer.DcopAlgorithmRun(
               graphInstantiator = myGrid,
               maxUtility = myGrid.maxUtility,
               domainSize = numberOfColors,
-              executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(600000),//300000), //1000000),
+              executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(300000), //(600000)- for aggreg,//300000), //1000000),
               runNumber = repetitions,
-              aggregationInterval = 1, //100, //if (em == ExecutionMode.Synchronous) 1 else 100,
+              aggregationInterval = 0, //1, //100, //if (em == ExecutionMode.Synchronous) 1 else 100,
               fullHistoryStats = false,
               revision = getRevision,
               evaluationDescription = evalName).runAlgorithm)
-
           }
         }
       }
@@ -166,3 +222,37 @@ object DcopEvaluation extends App {
   evaluation.execute
 
 }
+
+//  for (repetitions <- (1 to runs)) {
+//    //    for (graphNumber <- 0 until numberOfGraphs) {
+//    //      for (numberOfVertices <- numbersOfVertices) {
+//    //        for (edgeDensity <- edgeDensities) {
+//    //          for (numberOfColors <- numbersOfColors) {
+//    for (numberOfColors <- Set(8, 6, 4)) {
+//      for (gridWidth <- Set(1000, 100, 10)) {
+//        for (em <- List(ExecutionMode.Synchronous /*, ExecutionMode.OptimizedAsynchronous */)) {
+//          for (myOptimizer <- simpleOptimizers) {
+//
+//            val myGrid = new GridInstantiator(myOptimizer, gridWidth, domain = (0 until numberOfColors).toSet)
+//            //val myGraphInstantiator = new RandomGraphReader(myOptimizer, numberOfVertices, edgeDensity, numberOfColors, graphNumber)
+//
+//            evaluation = evaluation.addEvaluationRun(myOptimizer.DcopAlgorithmRun(
+//              graphInstantiator = myGrid,
+//              maxUtility = myGrid.maxUtility,
+//              domainSize = numberOfColors,
+//              executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(300000), //(600000)- for aggreg,//300000), //1000000),
+//              runNumber = repetitions,
+//              aggregationInterval = 0, //1, //100, //if (em == ExecutionMode.Synchronous) 1 else 100,
+//              fullHistoryStats = false,
+//              revision = getRevision,
+//              evaluationDescription = evalName).runAlgorithm)
+//          }
+//        }
+//      }
+//    }
+//
+//  }
+//
+//  evaluation.execute
+//
+//}
