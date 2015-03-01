@@ -35,20 +35,21 @@ import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules.IntAlgorithm
 import com.signalcollect.nodeprovisioning.torque.LocalHost
 
-class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
+class WrmiEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
   var runId = 0
   val executionModes = List(ExecutionMode.OptimizedAsynchronous, ExecutionMode.PureAsynchronous, ExecutionMode.Synchronous)
 
   //    lazy val smallWidth = Gen.chooseNum(1, 10)//.map(Width(_))
   //  implicit def arbSmallWidth[Int] = Arbitrary(smallWidth)
-  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 1000))
+  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 200))
+  implicit lazy val arbDouble = Arbitrary[Double](Gen.chooseNum(0.0, 1.0))
 
   def zeroInitialized(domain: Set[Int]) = 0
   val debug = false
   val localHost = new LocalHost
 
-  "Dsa" should "converge in a 1x1 grid in async mode with global termination condition in less than 5 seconds" in {
+  "Wrmi" should "converge in a 1x1 grid in async mode with global termination condition in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -71,29 +72,32 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         val numberOfColors = 4
         val gridWidth = 1
         val em = ExecutionMode.PureAsynchronous
-        val myAlgorithm = new DsaA(0.7)
-        val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+        val algorithms = List(new Wrmi(1.0, 0.1), new Wrmi(1.0, 0.2), new Wrmi(1.0, 0.4), new Wrmi(1.0, 0.6), new Wrmi(1.0, 0.8), new Wrmi(1.0, 0.9), new Wrmi(1.0, 1.0))
+
         val myAggregationInterval = 100
         val myFullHistory = false
 
-        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
-          graphInstantiator = myGrid,
-          maxUtility = myGrid.maxUtility,
-          domainSize = numberOfColors,
-          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
-          runNumber = runId,
-          aggregationInterval = myAggregationInterval,
-          fullHistoryStats = myFullHistory,
-          revision = "-1",
-          evaluationDescription = evalName).runAlgorithm)
-
+        for (myAlgorithm <- algorithms) {
+          val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+          evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
+            graphInstantiator = myGrid,
+            maxUtility = myGrid.maxUtility,
+            domainSize = numberOfColors,
+            executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
+            runNumber = runId,
+            aggregationInterval = myAggregationInterval,
+            fullHistoryStats = myFullHistory,
+            revision = "-1",
+            evaluationDescription = evalName).runAlgorithm)
+        }
         evaluation.execute
 
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val algo = res.getOrElse("optimizer", "NotDetected")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${algo.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${algo.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -101,7 +105,7 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "Dsa" should "converge in an overconstrained grid in async mode in less than 5 seconds" in {
+  "Wrmi" should "converge in an overconstrained grid in async mode in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -124,29 +128,32 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         val numberOfColors = 1
         val gridWidth = 5
         val em = ExecutionMode.OptimizedAsynchronous
-        val myAlgorithm = new DsaB(1.0)
-        val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+        val algorithms = List(new Wrmi(1.0, 0.1), new Wrmi(1.0, 0.2), new Wrmi(1.0, 0.4), new Wrmi(1.0, 0.6), new Wrmi(1.0, 0.8), new Wrmi(1.0, 0.9), new Wrmi(1.0, 1.0))
+
         val myAggregationInterval = 100
         val myFullHistory = false
 
-        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
-          graphInstantiator = myGrid,
-          maxUtility = myGrid.maxUtility,
-          domainSize = numberOfColors,
-          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
-          runNumber = runId,
-          aggregationInterval = myAggregationInterval,
-          fullHistoryStats = myFullHistory,
-          revision = "-1",
-          evaluationDescription = evalName).runAlgorithm)
-
+        for (myAlgorithm <- algorithms) {
+          val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+          evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
+            graphInstantiator = myGrid,
+            maxUtility = myGrid.maxUtility,
+            domainSize = numberOfColors,
+            executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
+            runNumber = runId,
+            aggregationInterval = myAggregationInterval,
+            fullHistoryStats = myFullHistory,
+            revision = "-1",
+            evaluationDescription = evalName).runAlgorithm)
+        }
         evaluation.execute
-        
+
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          // assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val algo = res.getOrElse("optimizer", "NotDetected")
+          assert(Boolean.equiv(isNe == "true", terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${algo.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          // assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${algo.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -154,7 +161,7 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "Dsa" should "converge in a 3x3 grid in Sync mode with high inertia condition in less than 5 seconds" in {
+  it should "converge in a 3x3 grid in Sync mode with high inertia condition in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -174,10 +181,10 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
         /*********/
 
-        val numberOfColors = 4
-        val gridWidth = 3
+        val numberOfColors = 11
+        val gridWidth = 200
         val em = ExecutionMode.Synchronous
-        val myAlgorithm = new DsaA(0.2)
+        val myAlgorithm = new Wrmi(0.1, 0.9)
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
         val myAggregationInterval = 1
         val myFullHistory = true
@@ -188,7 +195,7 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
           domainSize = numberOfColors,
           executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
           runNumber = runId,
-          aggregationInterval = myAggregationInterval,
+          aggregationInterval = 0,//myAggregationInterval,
           fullHistoryStats = myFullHistory,
           revision = "-1",
           evaluationDescription = evalName).runAlgorithm)
@@ -198,8 +205,11 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+          assert(Boolean.equiv(isNe == "true", terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(!(isOptimal == "true")||(isNe == "true"), s"It is optimal but not in a NEin run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
           assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          //assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -207,9 +217,9 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "VertexColoringAlgorithms" should "converge in a grid in less than 1 minute" in {
+  it should "converge synchronous in a grid in less than 1 minute" in {
     check(
-      (execModePar: Int, width: Int, colors: Int, algorithmNumber: Int, aggregation: Boolean, full: Boolean) => {
+      (width: Int, colors: Int, degPar: Double, rho: Double, aggregation: Boolean, full: Boolean) => {
         runId += 1
 
         var results = List[Map[String, String]]()
@@ -227,16 +237,12 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
         /*********/
 
-        val simpleAlgorithms: List[IntAlgorithm with Execution] = List(
-          new DsaA(1.0),
-          new DsaB(1.0),
-          new Jsfpi(1.0),
-          new Dsan(1.0, 1000, 2))
+        assert(rho <= 1 && rho >= 0 && degPar <= 1 && degPar >= 0)
 
-        val numberOfColors = colors % 6 + 4 //between 4 and 9
-        val gridWidth = width % 900
-        val em = ExecutionMode.OptimizedAsynchronous//executionModes((Math.abs(execModePar % executionModes.size)))
-        val myAlgorithm = simpleAlgorithms((Math.abs(algorithmNumber % simpleAlgorithms.size)))
+        val numberOfColors = colors % 5 + 4 //between 4 and 8
+        val gridWidth = width % 100
+        val em = ExecutionMode.Synchronous
+        val myAlgorithm = new Wrmi(degPar, rho)
         val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
         val myAggregationInterval = if (aggregation) { if (em == ExecutionMode.Synchronous) 1 else 100 } else 0
         val myFullHistory = false
@@ -245,7 +251,7 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
           graphInstantiator = myGrid,
           maxUtility = myGrid.maxUtility,
           domainSize = numberOfColors,
-          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(10000), //1000000),
+          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(60000), //1000000),
           runNumber = runId,
           aggregationInterval = myAggregationInterval,
           fullHistoryStats = myFullHistory,
@@ -258,9 +264,11 @@ class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did converge but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+          assert(Boolean.equiv(isNe == "true", terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(!(isOptimal == "true")||(isNe == "true"), s"It is optimal but not in a NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+           //assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true

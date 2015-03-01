@@ -48,7 +48,7 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
   val debug = false
   val localHost = new LocalHost
 
-  "Dsa" should "converge in a 1o vertex graph in async mode with global termination condition in less than 5 seconds" in {
+  "Dsa" should "converge in a 10 vertex graph in async mode with global termination condition in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -72,7 +72,7 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         val gridWidth = 1
         val em = ExecutionMode.PureAsynchronous
         val myAlgorithm = new DsaA(0.7)
-        val myGraph = new RandomGraphReader(myAlgorithm, "inputGraphs/V10_ED3_Col3_0.txt")
+        val myGraph = new RandomGraphReader(myAlgorithm, 10, 3, 3, 0)
         val myAggregationInterval = 100
         val myFullHistory = false
 
@@ -123,14 +123,14 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 
         val em = ExecutionMode.OptimizedAsynchronous
         val myAlgorithm = new DsaB(1.0)
-        val myGraph = new RandomGraphReader(myAlgorithm, "inputGraphs/V10_ED3_Col3_0.txt")
+        val myGraph = new RandomGraphReader(myAlgorithm, 10, 3, 3, 0)
         val myAggregationInterval = 10
         val myFullHistory = true
 
         evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
           graphInstantiator = myGraph,
           maxUtility = myGraph.maxUtility,
-          domainSize = myGraph.domain.size,
+          domainSize = 3,
           executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
           runNumber = runId,
           aggregationInterval = myAggregationInterval,
@@ -152,7 +152,7 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(100))
   }
 
-  "Dsa" should "converge in a 3x3 grid in Sync mode with high inertia condition in less than 5 seconds" in {
+  "Dsa" should "converge in a randomgraph in Sync mode with high inertia condition in less than 5 seconds" in {
     check(
       (execModePar: Int) => {
         runId += 1
@@ -172,18 +172,16 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
         /*********/
 
-        val numberOfColors = 4
-        val gridWidth = 3
         val em = ExecutionMode.Synchronous
         val myAlgorithm = new DsaA(0.2)
-        val myGraph = new RandomGraphReader(myAlgorithm, "inputGraphs/V10_ED3_Col3_0.txt")
+        val myGraph = new RandomGraphReader(myAlgorithm, 10, 3, 3, 0)
         val myAggregationInterval = 1
         val myFullHistory = true
 
         evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
           graphInstantiator = myGraph,
           maxUtility = myGraph.maxUtility,
-          domainSize = numberOfColors,
+          domainSize = 3,
           executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
           runNumber = runId,
           aggregationInterval = myAggregationInterval,
@@ -196,8 +194,9 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
@@ -205,9 +204,9 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
       minSuccessful(10))
   }
 
-  "VertexColoringAlgorithms" should "converge in a grid in less than 1 minute" in {
+  "VertexColoringAlgorithms" should "converge in a randgraph in less than 1 minute" in {
     check(
-      (execModePar: Int, width: Int, colors: Int, algorithmNumber: Int, aggregation: Boolean, full: Boolean) => {
+      (execModePar: Int, algorithmNumber: Int, aggregation: Boolean, full: Boolean) => {
         runId += 1
 
         var results = List[Map[String, String]]()
@@ -226,20 +225,19 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         /*********/
 
         val simpleAlgorithms: List[IntAlgorithm with Execution] = List(
-          new DsaA(0.7))
+          new DsaA(0.95),
+          new DsaB(0.95))
 
-        val numberOfColors = colors % 6 + 4 //between 4 and 9
-        val gridWidth = width % 10
-        val em = executionModes((Math.abs(execModePar % executionModes.size)))
+        val em = ExecutionMode.OptimizedAsynchronous //executionModes((Math.abs(execModePar % executionModes.size)))
         val myAlgorithm = simpleAlgorithms((Math.abs(algorithmNumber % simpleAlgorithms.size)))
-        val myGraph = new RandomGraphReader(myAlgorithm, "inputGraphs/V10_ED3_Col3_0.txt")
-        val myAggregationInterval = if (aggregation) { if (em == ExecutionMode.Synchronous) 1 else 100 } else 0
-        val myFullHistory = false
+        val myGraph = new RandomGraphReader(myAlgorithm, 1000, 3, 5, 0)
+        val myAggregationInterval = 0//100//if (aggregation) { if (em == ExecutionMode.Synchronous) 1 else 100 } else 0
+        val myFullHistory = true
 
         evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
           graphInstantiator = myGraph,
           maxUtility = myGraph.maxUtility,
-          domainSize = numberOfColors,
+          domainSize = 5,
           executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000), //1000000),
           runNumber = runId,
           aggregationInterval = myAggregationInterval,
@@ -250,16 +248,19 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         evaluation.execute
 
         println("The results")
+        assert(results.size == 1, "more results")
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did converge but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          println(terminationReason+" Ne:"+isNe)
+          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did converge but not in NE in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          //assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
         }
 
         true
       },
-      minSuccessful(10))
+      minSuccessful(1000))
   }
 
 }
