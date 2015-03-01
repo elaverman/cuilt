@@ -1,4 +1,4 @@
-dcop-algorithms
+test-dcop-algorithms
 ===============
 
 Framework for Local Algorithms used in Distributed Constraint Optimization Problems.
@@ -8,7 +8,7 @@ About
 -------------------------------------
 The package offers a modular framework for developing iterative approximate best-response algorithms for solving DCOPs and several algorithm implementations. [1]
 
-- DSA-A (Distributed Stochastic Algorithm, variant A) [1,3]
+- DSA-A (Distributed Stochastic Algorithm, variants A and B) [1,3]
 - DSAN (Distributed Simulated Annealing) [2]
 - JSFP-I (Joint Strategy Fictitious Play with Inertia) [4]
 - WRM-I (Weighted Regret Monitoring with Inertia) [1,5]
@@ -19,7 +19,8 @@ Ensure Java 8 is used for the compilation and install SBT, as described in the R
 
 The project has the following dependencies:
 - signal-collect
-
+- signal-collect-torque (only for the evaluation on a cluster)
+- signal-collect-slurm (only for the evaluation on a cluster)
 
 Follow the compilation instructions in the "signal-collect" README.
 
