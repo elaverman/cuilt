@@ -1,4 +1,4 @@
-package com.signalcollect.dcop.evaluation
+package com.signalcollect.dcop.graph
 
 import java.io.File
 import scala.io.Source
@@ -10,9 +10,9 @@ import com.signalcollect.nodeprovisioning.torque.LocalHost
 import com.signalcollect.nodeprovisioning.torque.TorqueHost
 import com.signalcollect.nodeprovisioning.torque.TorqueJobSubmitter
 import com.signalcollect.nodeprovisioning.torque.TorquePriority
-import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules._
 import com.signalcollect.dcop.algorithms._
+import com.signalcollect.dcop.evaluation._
 
 object GraphGeneratorRunner extends App {
 
@@ -55,12 +55,12 @@ object GraphGeneratorRunner extends App {
 
   /*********/
   def evalName = s"Graph generator"
-  def evalNumber = 9
-  def runs = 5
+  def evalNumber = 23
+  def runs = 1
   def pure = true
   var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken) //.addResultHandler(googleDocs) //.addResultHandler(mySql)
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-  //    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
+//      var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)//.addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
   evaluation = evaluation.addEvaluationRun(GraphGeneratorRun().runAlgorithm)
