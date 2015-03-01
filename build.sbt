@@ -18,6 +18,8 @@ resolvers += "Sonatype Snapshots Repository" at "https://oss.sonatype.org/conten
 
 parallelExecution in Test := false
 
+test in assembly := {}
+
 /** Dependencies */
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-library" % scalaVersion.value  % "compile",
