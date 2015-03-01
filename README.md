@@ -8,7 +8,7 @@ About
 -------------------------------------
 The package offers a modular framework for developing iterative approximate best-response algorithms for solving DCOPs and several algorithm implementations. [1]
 
-- DSA-A (Distributed Stochastic Algorithm, variants A and B) [1,3]
+- DSA (Distributed Stochastic Algorithm, variants A and B) [1,3]
 - DSAN (Distributed Simulated Annealing) [2]
 - JSFP-I (Joint Strategy Fictitious Play with Inertia) [4]
 - WRM-I (Weighted Regret Monitoring with Inertia) [1,5]
