@@ -85,7 +85,7 @@ case class RandomGraphGeneratorRun() extends Serializable {
         val trg = Random.nextInt(numberOfVertices)
         //println(src+" "+v(src)+" "+trg+" "+v(trg))
         if (src != trg && !e(src).contains(trg) && v(src) != v(trg)) {
-          edgeCounter += 2
+          edgeCounter += 1
           e(src) = trg :: e(src)
           e(trg) = src :: e(trg)
         }
