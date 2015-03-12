@@ -33,7 +33,7 @@ import com.signalcollect.dcop.algorithms._
 import com.signalcollect.dcop.evaluation._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules.IntAlgorithm
-import com.signalcollect.nodeprovisioning.torque.LocalHost
+import com.signalcollect.nodeprovisioning.slurm.LocalHost
 
 class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
 

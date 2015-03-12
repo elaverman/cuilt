@@ -53,6 +53,7 @@ class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity
     for (i <- 0 until contentNumberOfEdges) {
       val Array(src, trg) = br.readLine().split(" ").map(_.toInt)
       g.addEdge(src, myAlgo.createEdge(targetId = trg))
+      g.addEdge(trg, myAlgo.createEdge(targetId = src))
     }
 
     br.close()

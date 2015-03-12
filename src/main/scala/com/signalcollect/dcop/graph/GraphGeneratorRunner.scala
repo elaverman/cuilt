@@ -24,16 +24,16 @@ import scala.util.Random
 import com.signalcollect.Edge
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.nodeprovisioning.torque.LocalHost
-import com.signalcollect.nodeprovisioning.torque.TorqueHost
-import com.signalcollect.nodeprovisioning.torque.TorqueJobSubmitter
-import com.signalcollect.nodeprovisioning.torque.TorquePriority
+import com.signalcollect.nodeprovisioning.slurm.LocalHost
+import com.signalcollect.nodeprovisioning.slurm.SlurmHost
+import com.signalcollect.nodeprovisioning.slurm.SlurmJobSubmitter
+//import com.signalcollect.nodeprovisioning.slurm.TorquePriority
 import com.signalcollect.dcop.modules._
 import com.signalcollect.dcop.algorithms._
 import com.signalcollect.dcop.evaluation._
 
 /**
- * Creates the text files for the graphs on the given host. 
+ * Creates the text files for the graphs on the given host.
  */
 
 object GraphGeneratorRunner extends App {
@@ -48,28 +48,41 @@ object GraphGeneratorRunner extends App {
 
   def assemblyPath = "./target/scala-2.11/dcop-algorithms-assembly-1.0-SNAPSHOT.jar"
   val assemblyFile = new File(assemblyPath)
-  val kraken = new TorqueHost(
-    jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
-    coresPerNode = 23,
-    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/", priority = TorquePriority.superfast)
-  //  val gru = new SlurmHost(
-  //    jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
-  //    coresPerNode = 10,
-  //    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
+//  val kraken = new TorqueHost(
+//    jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+//    coresPerNode = 23,
+//    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/", priority = TorquePriority.superfast)
+    val gru = new SlurmHost(
+      jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
+      coresPerNode = 10,
+      localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
-
 
   /*********/
   def evalName = s"Graph generator"
   def evalNumber = 23
   def runs = 1
   def pure = true
-  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken) //.addResultHandler(googleDocs) //.addResultHandler(mySql)
-  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-//      var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)//.addResultHandler(googleDocs) //.addResultHandler(mySql)
+  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
+//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
   /*********/
 
-  evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun().runAlgorithm)
+  val numbersOfVertices = Set(10)//, 100, 1000, 10000, 100000, 1000000, 10000000)
+  val edgeDensities = Set(3)
+  val numbersOfColors = Set(5)
+  val numberOfGraphs = 3
+  val adoptGraphFormat = true
+
+  for (i <- 0 until numberOfGraphs) {
+    for (numberOfVertices <- numbersOfVertices) {
+      for (edgeDensity <- edgeDensities) {
+        for (numberOfColors <- numbersOfColors) {
+          evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat).generate)
+        }
+      }
+    }
+  }
 
   evaluation.execute
 
