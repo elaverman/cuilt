@@ -31,15 +31,7 @@ import com.signalcollect.dcop.graph._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.dcop.algorithms._
 
-class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
-
-  var runId = 0
-  val executionModes = List(ExecutionMode.OptimizedAsynchronous, /*ExecutionMode.PureAsynchronous,*/ ExecutionMode.Synchronous)
-  val algorithms = List(new DsaA(0.7), new DsaB(0.7), new Dsan(0.6, 1000, 2))
-
-  //    lazy val smallWidth = Gen.chooseNum(1, 10)//.map(Width(_))
-  //  implicit def arbSmallWidth[Int] = Arbitrary(smallWidth)
-  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 200))
+class SmallSpec extends FlatSpec with ShouldMatchers with Checkers with TestTools {
 
   "A vertexColoringAlgorithm" should "correctly assign colors to a 2 vertex graph" in {
     check(
@@ -69,7 +61,7 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
           g.shutdown
         }
       },
-      minSuccessful(10))
+      minSuccessful(minRuns))
   }
 
   it should "correctly assign colors to a 4 vertex grid" in {
@@ -117,7 +109,7 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
         }
         res
       },
-      minSuccessful(10))
+      minSuccessful(minRuns))
   }
 
   it should "correctly assign colors to a relaxed random grid" in {
@@ -152,7 +144,7 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers {
         }
         res
       },
-      minSuccessful(10))
+      minSuccessful(minRuns))
   }
 
 }

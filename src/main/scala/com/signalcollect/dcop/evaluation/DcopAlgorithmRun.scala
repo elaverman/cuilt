@@ -260,13 +260,12 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
     def runAlgorithm(): List[Map[String, String]] = {
 
-      println("Time" + System.nanoTime())
 
       val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
       println("Graph is " + graphInstantiator)
       println("Starting.")
-      println("Time" + System.nanoTime())
+      
 
       var computeRanks = false
 
@@ -289,7 +288,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      println(evaluationGraph)
+      
 
       val usedExecutionConfig =
         if (aggregationInterval <= 0) {
@@ -308,7 +307,8 @@ trait Execution extends SignalCollectAlgorithmBridge {
           executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
         }
 
-      println("*Executing...")
+      
+      println(s"*Execution started at time${System.nanoTime()}...")
 
       val date: Date = new Date
       val startTime = System.nanoTime()

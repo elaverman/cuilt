@@ -34,6 +34,8 @@ import scala.util.Random
  * that has at least one other neighbor.
  * A pair is a non-independent vertex of compatible color. We delete the old edge and create a new edge between the initial
  * vertex and the pair.
+ * 
+ * The Adopt file format conforms with http://teamcore.usc.edu/adopt/faq.txt
  */
 
 case class RandomGraphGeneratorRun(
