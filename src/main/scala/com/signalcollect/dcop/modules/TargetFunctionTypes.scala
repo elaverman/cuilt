@@ -40,46 +40,109 @@ trait TargetFunction extends Algorithm {
 
 trait MemoryLessTargetFunction extends TargetFunction {
 
+  def computeExpectedUtilityForStateValue(c: State): (Action, UtilityType) = {
+    (c.centralVariableValue, computeUtility(c))
+  }
+
   def computeExpectedUtilities(c: State): Map[Action, UtilityType] = {
-    val configUtilities = computeCandidates(c).map(c => (c.centralVariableValue, computeUtility(c))).toMap
+    val configUtilities = computeCandidates(c).map(c => computeExpectedUtilityForStateValue(c)).toMap
     configUtilities
   }
 
   override def updateMemory(c: State): State = c
 }
 
-trait AverageExpectedUtilityTargetFunction extends TargetFunction with StateWithMemory {
+/*
+ * Used in JSFP-I
+ */
+trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
 
-  def computeExpectedUtilities(conf: State) = {
-    val configUtilities = computeCandidates(conf).map(c =>
-      (c.centralVariableValue, if (conf.numberOfCollects == 0) computeUtility(c) else (computeUtility(c) + (c.numberOfCollects - 1) * c.memory(c.centralVariableValue)) / c.numberOfCollects)).toMap
-    configUtilities
+  override def computeExpectedUtilityForStateValue(conf: State): (Action, UtilityType) = {
+    val newUtility = if (conf.numberOfCollects == 0) {
+      computeUtility(conf)
+    } else {
+      (computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
+    }
+    (conf.centralVariableValue, newUtility)
   }
 
-  def updateMemory(c: State): State = {
+  override def updateMemory(c: State): State = {
     val newMemory = computeExpectedUtilities(c)
     c.withUpdatedMemory(newMemory)
   }
 }
 
-trait DiscountedAverageRegretsTargetFunction extends TargetFunction with StateWithMemory {
+/*
+ * Used in Fading memory JSFP-I
+ */
+trait WeightedExpectedUtilityTargetFunction extends AverageExpectedUtilityTargetFunction {
+
+  def rho: Double
+
+  override def computeExpectedUtilityForStateValue(conf: State): (Action, UtilityType) = {
+    val newUtility = if (conf.numberOfCollects == 0) {
+      computeUtility(conf)
+    } else {
+      rho * computeUtility(conf) + (1 - rho) * conf.memory(conf.centralVariableValue)
+    }
+    (conf.centralVariableValue, newUtility)
+  }
+
+}
+
+/*
+ * Used in RM
+ */
+trait AverageRegretsTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
+
+  def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
+    val newUtility =  if (conf.numberOfCollects == 0) {
+      computeUtility(candidate)
+       } else {
+        (computeUtility(candidate) - computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
+      }
+    (candidate.centralVariableValue, newUtility)
+  }
+
+
+  //takes max out of the 0 and expectedUtility
+  override def computeExpectedUtilities(conf: State) = {
+    val configUtilities = computeCandidates(conf).map(c => {
+      val (value, utility) = computeExpectedUtilityForStateValue(c, conf)
+      (value, math.max(0, utility))
+    }).toMap
+
+    configUtilities
+  }
+
+  override def updateMemory(conf: State): State = {
+    val newMemory = //computeExpectedUtilities(c)
+      computeCandidates(conf).map(c => computeExpectedUtilityForStateValue(c, conf)).toMap
+    conf.withUpdatedMemory(newMemory)
+  }
+
+}
+
+/*
+ * Used in WRM-I
+ */
+trait DiscountedAverageRegretsTargetFunction extends AverageRegretsTargetFunction {
 
   def rho: Double
 
   /*
    * All regrets are minimum 0.
    */
-  override def computeExpectedUtilities(conf: State) = {
-    val configUtilities = computeCandidates(conf).map(c =>
-      (c.centralVariableValue, math.max(0, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue)))).toMap
-    configUtilities
+  override def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
+    val newUtility = rho * (computeUtility(candidate) - computeUtility(conf)) + (1 - rho) * candidate.memory(candidate.centralVariableValue)
+    (candidate.centralVariableValue, newUtility)
   }
-  
-  def updateMemory(conf: State): State = {
-    val newMemory = computeCandidates(conf).map(c =>
-      (c.centralVariableValue, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
-    conf.withUpdatedMemory(newMemory)
-  }
-  
+
+//  def updateMemory(conf: State): State = {
+//    val newMemory = computeCandidates(conf).map(c =>
+//      (c.centralVariableValue, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
+//    conf.withUpdatedMemory(newMemory)
+//  }
+
 }
 
