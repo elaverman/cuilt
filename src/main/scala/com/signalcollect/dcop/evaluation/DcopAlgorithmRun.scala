@@ -20,7 +20,6 @@
 
 package com.signalcollect.dcop.evaluation
 
-import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules._
 import com.signalcollect._
 import java.util.Date
@@ -28,6 +27,7 @@ import com.signalcollect.dcop._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.interfaces.ModularAggregationOperation
+import scala.util.Random
 
 trait Execution extends SignalCollectAlgorithmBridge {
 
@@ -184,10 +184,10 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val numberOfVerticesInLocalOptima = g.aggregate(NumberOfLocalOptimaCounter)
       conflictsHistory += ((steps, numberOfConflictsHistory))
       localOptimaHistory += ((steps, numberOfVerticesInLocalOptima))
-      val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
+      val (isInLocOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
       extraStats.updateAvgGlobal(numberOfConflicts, steps)
       //TODO verify
-      if (isInLocalOptimum && steps > 0) {
+      if (isInLocOptimum && steps > 0) {
         extraStats.updateTimeToFirstLocOptimum(steps)
       }
 
@@ -203,14 +203,46 @@ trait Execution extends SignalCollectAlgorithmBridge {
       //      }
       //      println
 
-      //      val width = math.floor(math.sqrt(a.size)).toInt
-      //
-      //      for (i <- 0 until width) {
-      //        for (j <- 0 until width) {
-      //          print(a(i * width + j) + " ")
-      //        }
-      //        println
-      //      }
+      val width = math.floor(math.sqrt(a.size)).toInt
+
+      for (i <- 0 until width) {
+        for (j <- 0 until width) {
+          print(a(i * width + j) + " ")
+        }
+        println
+      }
+      println
+
+      // ---
+      def info(c: State): String = {
+        val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+        val normFactor = expectedUtilities.values.sum
+        val selectionProb = Random.nextDouble
+
+        var string = c.agentId + "INFO[" + isInLocalOptimum(c).toString + " regret: " + expectedUtilities +" "+ c+"]"//" " + normFactor + " " + selectionProb + " "
+/*
+        var partialSum: Double = 0.0
+        for (action <- expectedUtilities.keys) {
+          partialSum += expectedUtilities(action)
+          if (selectionProb * normFactor <= partialSum) {
+            string = string + action.toString + "]"
+            return string
+          }
+        }
+        */
+        string
+      }
+
+      def stateOfVertex(id: Int) = g.forVertexWithId[Vertex[AgentId, State, Any, Any], State](id, x => x.state)
+
+      for (i <- 0 until width) {
+        for (j <- 0 until width) {
+          println(info(stateOfVertex(i * width + j)) + " ")
+        }
+      }
+      println
+
+      //--
 
       steps += 1
       false
@@ -260,12 +292,10 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
     def runAlgorithm(): List[Map[String, String]] = {
 
-
       val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
       println("Graph is " + graphInstantiator)
       println("Starting.")
-      
 
       var computeRanks = false
 
@@ -288,8 +318,6 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      
-
       val usedExecutionConfig =
         if (aggregationInterval <= 0) {
           println("No extensive stats will be gathered.")
@@ -307,7 +335,6 @@ trait Execution extends SignalCollectAlgorithmBridge {
           executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
         }
 
-      
       println(s"*Execution started at time${System.nanoTime()}...")
 
       val date: Date = new Date

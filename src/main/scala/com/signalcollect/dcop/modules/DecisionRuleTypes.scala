@@ -34,8 +34,8 @@ trait DecisionRule extends Algorithm {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
     val maxUtility = expectedUtilities.values.max
     val res = isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)
-    //    if (!res) 
-    //      println("###"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
+    //        if (!res) 
+    //          println("###DecisionRule.isInLocalOptimum"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
     res
   }
 
@@ -99,7 +99,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
   def k: Double
   var iteration = 0
 
-  def etaInverse(i: Int) =  i * i /const
+  def etaInverse(i: Int) = i * i / const
   var deltaComp = 0.0
 
   override def computeMove(c: State) = {
@@ -108,7 +108,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
     val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
     val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
     deltaComp = delta
-    val probab = if (delta == 0) 0.001 else scala.math.exp(delta *  etaInverse(iteration))
+    val probab = if (delta == 0) 0.001 else scala.math.exp(delta * etaInverse(iteration))
     if (delta > 0 || (delta <= 0 && Random.nextDouble <= probab)) {
       randomMove
     } else {
@@ -120,19 +120,21 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
 
 trait LinearProbabilisticDecisionRule extends DecisionRule {
 
-
   /*
    * In the case where we have a flat distribution and normFactor would be 0, the function should return the first action. 
    */
   override def computeMove(c: State): Action = {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
-    val normFactor = expectedUtilities.values.sum
-    val selectionProb = Random.nextDouble
+    assert(expectedUtilities.values.forall(_ >= 0))
+    val scaleFactor = expectedUtilities.values.sum
+    val intervalSelector = Random.nextDouble * scaleFactor
+
+    if (scaleFactor == 0.0) return c.centralVariableValue
 
     var partialSum: Double = 0.0
     for (action <- expectedUtilities.keys) {
       partialSum += expectedUtilities(action)
-      if (selectionProb * normFactor <= partialSum) {
+      if (intervalSelector <= partialSum) {
         return action
       }
     }

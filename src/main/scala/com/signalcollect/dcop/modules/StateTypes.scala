@@ -135,6 +135,10 @@ trait SimpleMemoryState extends StateWithMemory {
     def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
       this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
     }
+    
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+    }
   }
 }
 

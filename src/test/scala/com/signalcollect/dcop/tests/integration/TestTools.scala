@@ -39,7 +39,7 @@ trait TestTools {
 
   //    lazy val smallWidth = Gen.chooseNum(1, 10)//.map(Width(_))
   //  implicit def arbSmallWidth[Int] = Arbitrary(smallWidth)
-  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 200))
+  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(1, 200))
 
   def zeroInitialized(domain: Set[Int]) = 0
   val debug = false
@@ -47,14 +47,14 @@ trait TestTools {
 
   def implies(a: Boolean, b: Boolean): Boolean = !a || b
 
-  def checkAssertions(runId: Int, terminationReason: String, isNe: String, isOptimal: String, isAbsorbing: Boolean, mustConverge: Boolean): Boolean = {
-    assert(implies(isOptimal == "true", isNe == "true"), s"It is optimal but not in a NE in run $runId.") // for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-    assert(implies(terminationReason == "Converged", isNe == "true"), s"Termination reason $terminationReason, NE $isNe in run $runId.") // for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+  def checkAssertions(runId: Int, terminationReason: String, isNe: String, isOptimal: String, isAbsorbing: Boolean, mustConverge: Boolean, extraInfo: String = ""): Boolean = {
+    assert(implies(isOptimal == "true", isNe == "true"), s"It is optimal but not in a NE in run $runId. Termination reason $terminationReason. $extraInfo") // for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+    assert(implies(terminationReason == "Converged", isNe == "true"), s"Termination reason $terminationReason, NE $isNe in run $runId. $extraInfo") // for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
     if (isAbsorbing) {
-      assert(implies(isNe == "true", terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId. NE should be absorbing.")
+      assert(implies(isNe == "true", terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId. NE should be absorbing. $extraInfo")
     }
     if (mustConverge) {
-      assert(terminationReason == "Converged", s"Termination reason $terminationReason. Algorithm should have converged.")
+      assert(terminationReason == "Converged", s"Termination reason $terminationReason. Algorithm should have converged. $extraInfo")
     }
     true
   }
