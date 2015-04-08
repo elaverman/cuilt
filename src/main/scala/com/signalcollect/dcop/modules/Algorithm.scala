@@ -70,7 +70,7 @@ trait Algorithm extends Serializable {
 
   def shouldTerminate(c: State): Boolean //termination rule
 
-  def updateMemory(c: State): State //target function
+  def updateMemoryOfStateFromState(toUpdateState: State, fromState: State): State //target function
 
   def computeExpectedUtilities(c: State): Map[Action, UtilityType] //target function
 

@@ -35,7 +35,7 @@ trait TargetFunction extends Algorithm {
 
   def computeExpectedUtilities(c: State): Map[Action, UtilityType]
 
-  def updateMemory(c: State): State
+  def updateMemoryOfStateFromState(toUpdateState: State, fromState: State): State
 }
 
 trait MemoryLessTargetFunction extends TargetFunction {
@@ -49,7 +49,7 @@ trait MemoryLessTargetFunction extends TargetFunction {
     configUtilities
   }
 
-  override def updateMemory(c: State): State = c
+  override def updateMemoryOfStateFromState(toUpdateState: State, fromState: State): State = toUpdateState
 }
 
 /*
@@ -66,9 +66,9 @@ trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction with
     (conf.centralVariableValue, newUtility)
   }
 
-  override def updateMemory(c: State): State = {
-    val newMemory = computeExpectedUtilities(c)
-    c.withUpdatedMemory(newMemory)
+  override def updateMemoryOfStateFromState(toUpdateState: State, fromState: State): State = {
+    val newMemory = computeExpectedUtilities(fromState)
+    toUpdateState.withUpdatedMemory(newMemory)
   }
 }
 
@@ -96,14 +96,14 @@ trait WeightedExpectedUtilityTargetFunction extends AverageExpectedUtilityTarget
 trait AverageRegretsTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
 
   def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
-    val newUtility =  if (conf.numberOfCollects == 0) {
-      computeUtility(candidate)
-       } else {
-        (computeUtility(candidate) - computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
-      }
+    val newUtility = if (conf.numberOfCollects == 0) {
+     // println("===> candidate:"+candidate+"util"+computeUtility(candidate)+"conf:"+conf+"util"+computeUtility(conf))
+      computeUtility(candidate) - computeUtility(conf)
+    } else {
+      (computeUtility(candidate) - computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
+    }
     (candidate.centralVariableValue, newUtility)
   }
-
 
   //takes max out of the 0 and expectedUtility
   override def computeExpectedUtilities(conf: State) = {
@@ -115,10 +115,10 @@ trait AverageRegretsTargetFunction extends MemoryLessTargetFunction with StateWi
     configUtilities
   }
 
-  override def updateMemory(conf: State): State = {
-    val newMemory = //computeExpectedUtilities(c)
-      computeCandidates(conf).map(c => computeExpectedUtilityForStateValue(c, conf)).toMap
-    conf.withUpdatedMemory(newMemory)
+  override def updateMemoryOfStateFromState(toUpdateState: State, fromState: State): State = {
+    //newMemory is different from the actual target function expected utilities (regret is minimum 0, but the memory can be negative).
+    val newMemory = computeCandidates(fromState).map(computeExpectedUtilityForStateValue(_, fromState)).toMap
+    toUpdateState.withUpdatedMemory(newMemory)
   }
 
 }
@@ -134,15 +134,14 @@ trait DiscountedAverageRegretsTargetFunction extends AverageRegretsTargetFunctio
    * All regrets are minimum 0.
    */
   override def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
-    val newUtility = rho * (computeUtility(candidate) - computeUtility(conf)) + (1 - rho) * candidate.memory(candidate.centralVariableValue)
+    val newUtility = if (conf.numberOfCollects == 0) {
+      //println("===> candidate:"+candidate+"util"+computeUtility(candidate)+"conf:"+conf+"util"+computeUtility(conf))
+      computeUtility(candidate) - computeUtility(conf)
+    } else {
+      rho * (computeUtility(candidate) - computeUtility(conf)) + (1 - rho) * candidate.memory(candidate.centralVariableValue)
+    }
     (candidate.centralVariableValue, newUtility)
   }
-
-//  def updateMemory(conf: State): State = {
-//    val newMemory = computeCandidates(conf).map(c =>
-//      (c.centralVariableValue, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
-//    conf.withUpdatedMemory(newMemory)
-//  }
 
 }
 

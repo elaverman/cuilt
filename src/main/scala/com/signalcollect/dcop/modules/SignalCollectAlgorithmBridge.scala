@@ -125,32 +125,35 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
      * algorithm components.
      */
     def collect = {
-      val c = updatedState
-      if (shouldConsiderMove(c)) {
-        val newMove = changeMove(c)
+      val updatedNeighborhoodState = updateNeighbourhood
+      
+      val newState = if (shouldConsiderMove(updatedNeighborhoodState)) {
+        val newMove = changeMove(updatedNeighborhoodState)
         //println(s"Vertex $id has considers new move $newMove, prior state $state.")
         newMove
       } else {
-        if (isConverged(c)) {
+        if (isConverged(updatedNeighborhoodState)) {
           //println(s"Vertex $id has converged and stays at move of state $c, prior state $state.")
           sendMessageToMyself = false
-          c
+          updatedNeighborhoodState
         } else {
           //println(s"Vertex $id still NOT converged, stays at move, and has state $c, prior state $state.")
           sendMessageToMyself = true
-          c
+          updatedNeighborhoodState
         }
       }
+      
+      //Memory for the new state is calculated based on the updatedNeighborhoodState
+      val memoryUpdatedState = updateMemoryOfStateFromState(newState, updatedNeighborhoodState)
+      memoryUpdatedState
     }
 
     /*
      * Updates state with the new received signals. Could be overriden depending on the state type. 
      */
-    def updatedState: State = {
+    def updateNeighbourhood: State = {
       val signalMap = mostRecentSignalMap.toMap
-      val neighborhoodUpdated = state.updateNeighbourhood(signalMap.asInstanceOf[Map[AgentId, SignalType]])
-      val c = updateMemory(neighborhoodUpdated)
-      c
+      state.updateNeighbourhood(signalMap.asInstanceOf[Map[AgentId, SignalType]])
     }
 
     def isConverged(c: State): Boolean = {
@@ -164,8 +167,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
     def changeMove(c: State): State = {
       val move = computeMove(c)
-      val newConfig = c.withCentralVariableAssignment(move)
-      val newState = newConfig
+      val newState = c.withCentralVariableAssignment(move)
       //if (debug) {
       // println(s"Vertex $id has changed its state from $state to $newState.")
       //}
