@@ -164,8 +164,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
     def changeMove(c: State): State = {
       val move = computeMove(c)
-      val newConfig = c.withCentralVariableAssignment(move)
-      val newState = newConfig
+      val newState = c.withCentralVariableAssignment(move)
       //if (debug) {
       // println(s"Vertex $id has changed its state from $state to $newState.")
       //}

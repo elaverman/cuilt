@@ -45,7 +45,7 @@ trait MemoryLessTargetFunction extends TargetFunction {
   }
 
   def computeExpectedUtilities(c: State): Map[Action, UtilityType] = {
-    val configUtilities = computeCandidates(c).map(c => computeExpectedUtilityForStateValue(c)).toMap
+    val configUtilities = computeCandidates(c).map(computeExpectedUtilityForStateValue(_)).toMap
     configUtilities
   }
 
@@ -58,16 +58,24 @@ trait MemoryLessTargetFunction extends TargetFunction {
 trait AverageExpectedUtilityTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
 
   override def computeExpectedUtilityForStateValue(conf: State): (Action, UtilityType) = {
-    val newUtility = if (conf.numberOfCollects == 0) {
-      computeUtility(conf)
-    } else {
-      (computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
-    }
-    (conf.centralVariableValue, newUtility)
+    (conf.centralVariableValue, conf.memory(conf.centralVariableValue))
+  }
+
+  def computeMemory(state: State): Map[Action, UtilityType] = {
+    val memory = computeCandidates(state).map(candidate => {
+      val newMemoryForCandidate = if (state.numberOfCollects == 0) {
+        computeUtility(candidate)
+      } else { //the memory and number of collects should be the same for the candidate and for the state
+        (computeUtility(candidate) + (state.numberOfCollects - 1) * state.memory(candidate.centralVariableValue)) / state.numberOfCollects
+      }
+      (candidate.centralVariableValue, newMemoryForCandidate)
+    }).toMap
+
+    memory
   }
 
   override def updateMemory(c: State): State = {
-    val newMemory = computeExpectedUtilities(c)
+    val newMemory = computeMemory(c)
     c.withUpdatedMemory(newMemory)
   }
 }
@@ -79,13 +87,16 @@ trait WeightedExpectedUtilityTargetFunction extends AverageExpectedUtilityTarget
 
   def rho: Double
 
-  override def computeExpectedUtilityForStateValue(conf: State): (Action, UtilityType) = {
-    val newUtility = if (conf.numberOfCollects == 0) {
-      computeUtility(conf)
-    } else {
-      rho * computeUtility(conf) + (1 - rho) * conf.memory(conf.centralVariableValue)
-    }
-    (conf.centralVariableValue, newUtility)
+  override def computeMemory(state: State): Map[Action, UtilityType] = {
+    val memory = computeCandidates(state).map(candidate => {
+      val newMemoryForCandidate = if (state.numberOfCollects == 0) {
+        computeUtility(candidate)
+      } else { //the memory should be the same for the candidate and for the state
+        rho * computeUtility(candidate) + (1 - rho) * state.memory(candidate.centralVariableValue)
+      }
+      (candidate.centralVariableValue, newMemoryForCandidate)
+    }).toMap
+    memory
   }
 
 }
@@ -95,29 +106,25 @@ trait WeightedExpectedUtilityTargetFunction extends AverageExpectedUtilityTarget
  */
 trait AverageRegretsTargetFunction extends MemoryLessTargetFunction with StateWithMemory {
 
-  def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
-    val newUtility =  if (conf.numberOfCollects == 0) {
-      computeUtility(candidate)
-       } else {
-        (computeUtility(candidate) - computeUtility(conf) + (conf.numberOfCollects - 1) * conf.memory(conf.centralVariableValue)) / conf.numberOfCollects
-      }
-    (candidate.centralVariableValue, newUtility)
+  //takes max out of the 0 and expectedUtility
+  override def computeExpectedUtilityForStateValue(conf: State): (Action, UtilityType) = {
+    (conf.centralVariableValue, math.max(0, conf.memory(conf.centralVariableValue)))
   }
 
-
-  //takes max out of the 0 and expectedUtility
-  override def computeExpectedUtilities(conf: State) = {
-    val configUtilities = computeCandidates(conf).map(c => {
-      val (value, utility) = computeExpectedUtilityForStateValue(c, conf)
-      (value, math.max(0, utility))
+  def computeMemory(state: State): Map[Action, UtilityType] = {
+    val memory = computeCandidates(state).map(candidate => {
+      val newMemoryForCandidate = if (state.numberOfCollects == 0) {
+        computeUtility(candidate) - computeUtility(state)
+      } else { //the memory and number of collects should be the same for the candidate and for the state
+        (computeUtility(candidate) - computeUtility(state) + (state.numberOfCollects - 1) * state.memory(candidate.centralVariableValue)) / state.numberOfCollects
+      }
+      (candidate.centralVariableValue, newMemoryForCandidate)
     }).toMap
-
-    configUtilities
+    memory
   }
 
   override def updateMemory(conf: State): State = {
-    val newMemory = //computeExpectedUtilities(c)
-      computeCandidates(conf).map(c => computeExpectedUtilityForStateValue(c, conf)).toMap
+    val newMemory = computeMemory(conf)
     conf.withUpdatedMemory(newMemory)
   }
 
@@ -130,19 +137,17 @@ trait DiscountedAverageRegretsTargetFunction extends AverageRegretsTargetFunctio
 
   def rho: Double
 
-  /*
-   * All regrets are minimum 0.
-   */
-  override def computeExpectedUtilityForStateValue(candidate: State, conf: State): (Action, UtilityType) = {
-    val newUtility = rho * (computeUtility(candidate) - computeUtility(conf)) + (1 - rho) * candidate.memory(candidate.centralVariableValue)
-    (candidate.centralVariableValue, newUtility)
+  override def computeMemory(state: State): Map[Action, UtilityType] = {
+    val memory = computeCandidates(state).map(candidate => {
+      val newMemoryForCandidate = if (state.numberOfCollects == 0) {
+        computeUtility(candidate) - computeUtility(state)
+      } else { //the memory should be the same for the candidate and for the state
+        rho * (computeUtility(candidate) - computeUtility(state)) + (1 - rho) * state.memory(candidate.centralVariableValue)
+      }
+      (candidate.centralVariableValue, newMemoryForCandidate)
+    }).toMap
+    memory
   }
-
-//  def updateMemory(conf: State): State = {
-//    val newMemory = computeCandidates(conf).map(c =>
-//      (c.centralVariableValue, rho * (computeUtility(c) - computeUtility(conf)) + (1 - rho) * c.memory(c.centralVariableValue))).toMap
-//    conf.withUpdatedMemory(newMemory)
-//  }
 
 }
 
