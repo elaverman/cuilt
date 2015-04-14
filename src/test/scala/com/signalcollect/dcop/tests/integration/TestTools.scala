@@ -21,6 +21,7 @@
 package com.signalcollect.dcop.tests.integration
 
 import org.scalacheck.Arbitrary
+
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.ShouldMatchers
@@ -31,6 +32,12 @@ import com.signalcollect._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.dcop.modules.IntAlgorithm
 import com.signalcollect.nodeprovisioning.slurm.LocalHost
+
+import org.scalatest.Tag
+
+//http://www.scalatest.org/user_guide/tagging_your_tests
+object SlowTest extends Tag("com.signalcollect.dcop.tags.SlowTest")
+
 
 trait TestTools {
   var runId = 0
