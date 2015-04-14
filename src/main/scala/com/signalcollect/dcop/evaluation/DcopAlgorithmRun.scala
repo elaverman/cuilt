@@ -31,6 +31,9 @@ import scala.util.Random
 
 trait Execution extends SignalCollectAlgorithmBridge {
 
+  def logger = false
+  def isGrid = true
+
   /*
  * Returns true iff for each vertex, there is no state with better expected utility than the current one.
  * The values for the target function are computed with the potentially new action but the actions of the neighbours
@@ -191,7 +194,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
         extraStats.updateTimeToFirstLocOptimum(steps)
       }
 
-      //println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
+      println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
       val actions = g.aggregate(ActionDetector)
 
       var a: Array[Long] = new Array(actions.size)
@@ -205,22 +208,14 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       val width = math.floor(math.sqrt(a.size)).toInt
 
-      for (i <- 0 until width) {
-        for (j <- 0 until width) {
-          print(a(i * width + j) + " ")
-        }
-        println
-      }
-      println
-
       // ---
       def info(c: State): String = {
         val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
         val normFactor = expectedUtilities.values.sum
         val selectionProb = Random.nextDouble
 
-        var string = c.agentId + "INFO[" + isInLocalOptimum(c).toString + " regret: " + expectedUtilities +" "+ c+"]"//" " + normFactor + " " + selectionProb + " "
-/*
+        var string = c.agentId + "INFO[" + isInLocalOptimum(c).toString + " regret: " + expectedUtilities + " " + c + "]" //" " + normFactor + " " + selectionProb + " "
+        /*
         var partialSum: Double = 0.0
         for (action <- expectedUtilities.keys) {
           partialSum += expectedUtilities(action)
@@ -235,14 +230,26 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       def stateOfVertex(id: Int) = g.forVertexWithId[Vertex[AgentId, State, Any, Any], State](id, x => x.state)
 
-      for (i <- 0 until width) {
-        for (j <- 0 until width) {
-          println(info(stateOfVertex(i * width + j)) + " ")
-        }
-      }
-      println
+      if (logger == true && isGrid == true) {
 
-      //--
+        println("Step" + steps)
+
+        //TODO put this under logging
+        for (i <- 0 until width) {
+          for (j <- 0 until width) {
+            println(info(stateOfVertex(i * width + j)) + " ")
+          }
+        }
+        println
+
+        for (i <- 0 until width) {
+          for (j <- 0 until width) {
+            print(a(i * width + j) + " ")
+          }
+          println
+        }
+        println
+      }
 
       steps += 1
       false
