@@ -55,7 +55,7 @@ object DcopEvaluation extends App {
       coresPerNode = 10,
       localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
-  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationMassiveMASRandGraph", "bigGrid")
+  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationCP", "bigGraph")
   // val mySql = new MySqlResultHandler(args(2), args(3), args(4))
 
   def getRevision: String = {
@@ -81,13 +81,13 @@ object DcopEvaluation extends App {
   def runs = 10
   def pure = true
  // var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken).addResultHandler(googleDocs) //.addResultHandler(mySql)
-    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru) //.addResultHandler(mySql)
-  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru).addResultHandler(googleDocs) //.addResultHandler(mySql)
+//    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(googleDocs) //.addResultHandler(mySql)
   /*********/
 
   var graphs: List[String] = List()
 
-  val numbersOfVertices = Set(10, 100, 1000, 10000, 100000, 1000000)
+  val numbersOfVertices = Set(10)//, 100, 1000, 10000, 100000, 1000000)
   val edgeDensities = Set(3)
   val numbersOfColors = Set(5) //Set(3)
   val numberOfGraphs = 3
