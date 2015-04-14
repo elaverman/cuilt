@@ -48,14 +48,14 @@ object GraphGeneratorRunner extends App {
 
   def assemblyPath = "./target/scala-2.11/dcop-algorithms-assembly-1.0-SNAPSHOT.jar"
   val assemblyFile = new File(assemblyPath)
-//  val kraken = new TorqueHost(
-//    jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
-//    coresPerNode = 23,
-//    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/", priority = TorquePriority.superfast)
-    val gru = new SlurmHost(
-      jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
-      coresPerNode = 10,
-      localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
+  //  val kraken = new TorqueHost(
+  //    jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+  //    coresPerNode = 23,
+  //    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/", priority = TorquePriority.superfast)
+  val gru = new SlurmHost(
+    jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
+    coresPerNode = 10,
+    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
 
   /*********/
@@ -64,21 +64,22 @@ object GraphGeneratorRunner extends App {
   def runs = 1
   def pure = true
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken)
-    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
-//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
+  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
+  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
   /*********/
 
-  val numbersOfVertices = Set(10)//, 100, 1000, 10000, 100000, 1000000, 10000000)
+  val numbersOfVertices = Set(40, 80) //(1000000)//, 1000, 10000, 100000)//10)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
   val edgeDensities = Set(3)
-  val numbersOfColors = Set(5)
-  val numberOfGraphs = 3
-  val adoptGraphFormat = true
+  val numbersOfColors = Set(5, 4, 3)
+  val numberOfGraphs = 20
+  val adoptGraphFormat = false
+  val discardForInitialLonelyVertices = true
 
   for (i <- 0 until numberOfGraphs) {
     for (numberOfVertices <- numbersOfVertices) {
       for (edgeDensity <- edgeDensities) {
         for (numberOfColors <- numbersOfColors) {
-          evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat).generate)
+          evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat, discardForInitialLonelyVertices).generate)
         }
       }
     }

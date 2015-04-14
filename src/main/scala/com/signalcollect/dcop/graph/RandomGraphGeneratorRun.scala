@@ -34,7 +34,7 @@ import scala.util.Random
  * that has at least one other neighbor.
  * A pair is a non-independent vertex of compatible color. We delete the old edge and create a new edge between the initial
  * vertex and the pair.
- * 
+ *
  * The Adopt file format conforms with http://teamcore.usc.edu/adopt/faq.txt
  */
 
@@ -43,100 +43,105 @@ case class RandomGraphGeneratorRun(
   edgeDensity: Int,
   numberOfColors: Int,
   fileName: String,
-  adoptGraphFormat: Boolean) extends Serializable {
+  adoptGraphFormat: Boolean,
+  discardForInitialLonelyVertices: Boolean) extends Serializable {
 
-  var edgeCounter = 0
+  class GraphElements() {
 
-  val v = new Array[Int](numberOfVertices)
-  val e = new Array[List[Int]](numberOfVertices)
+    var edgeCounter = 0
 
-  val domain = (0 until numberOfColors).toSet
-  def randomFromDomain = domain.toSeq(Random.nextInt(domain.size))
+    val v = new Array[Int](numberOfVertices)
+    val e = new Array[List[Int]](numberOfVertices)
 
-  for (i <- 0 until numberOfVertices) {
-    v(i) = randomFromDomain
-    e(i) = List()
+    val domain = (0 until numberOfColors).toSet
+    def randomFromDomain = domain.toSeq(Random.nextInt(domain.size))
+
+    for (i <- 0 until numberOfVertices) {
+      v(i) = randomFromDomain
+      e(i) = List()
+    }
+
+    def addAllEdges = {
+      while (edgeCounter < numberOfVertices * edgeDensity) {
+        val src = Random.nextInt(numberOfVertices)
+        val trg = Random.nextInt(numberOfVertices)
+        //println(src+" "+v(src)+" "+trg+" "+v(trg))
+        if (src != trg && !e(src).contains(trg) && v(src) != v(trg)) {
+          edgeCounter += 1
+          e(src) = trg :: e(src)
+          e(trg) = src :: e(trg)
+        }
+      }
+    }
+
+    def bindMissingVertices: Boolean = {
+      var ok = true
+
+      println("binding phase")
+      for (i <- 0 until numberOfVertices) {
+        if (e(i).isEmpty) {
+          //Normally, done like this, but for very large sparse graphs, it has a high failure rate.
+          ok = false
+          if (!discardForInitialLonelyVertices) {
+            var counter = 0 //we give up if we can't find anything...
+            //We look for another vertex with different color and we delete one of its edges
+            while (!ok && counter < numberOfVertices * 2) {
+              counter += 1
+              val newPair = Random.nextInt(numberOfVertices)
+              if (!e(newPair).isEmpty && v(newPair) != v(i)) {
+                val pairsOfPair = e(newPair).toArray
+                val pairOfPair = pairsOfPair(Random.nextInt(pairsOfPair.size))
+                if (e(pairOfPair).size > 1) {
+                  //remove old connection
+                  e(pairOfPair) = e(pairOfPair).filter { x => x != newPair }
+                  e(newPair) = e(newPair).filter { x => x != pairOfPair }
+                  //add new connection
+                  e(newPair) = i :: e(newPair)
+                  e(i) = newPair :: e(i)
+                  ok = true
+                }
+              }
+            }
+          }
+        }
+      }
+      ok
+    }
+
+    def verify = {
+      //verification
+      for (i <- 0 until numberOfVertices) {
+        assert(e(i).nonEmpty, s"vertex without connections $i")
+        for (j <- e(i)) {
+          assert(v(i) != v(j), s"colors are the same for $i and $j")
+          assert(Boolean.equiv(e(i).contains(j), e(j).contains(i)), s"edges are not bidirectional for $i and $j")
+        }
+      }
+    }
+
   }
 
   def generate(): List[Map[String, String]] = {
+    val myGraph = new GraphElements()
     var ok = false
     var finalResults = List[Map[String, String]]()
     println("Starting generating" + fileName)
 
     while (!ok) {
       print(".")
-      addAllEdges
-      ok = bindMissingVertices
+      myGraph.addAllEdges
+      ok = myGraph.bindMissingVertices
     }
 
-    verify
+    myGraph.verify
 
     //Writing to file
-    if (adoptGraphFormat) writeAdoptFormat else writeStdFormat
+    if (adoptGraphFormat) writeAdoptFormat(myGraph) else writeStdFormat(myGraph)
 
     finalResults
   }
 
-  
-  
-  def addAllEdges = {
-    while (edgeCounter < numberOfVertices * edgeDensity) {
-      val src = Random.nextInt(numberOfVertices)
-      val trg = Random.nextInt(numberOfVertices)
-      //println(src+" "+v(src)+" "+trg+" "+v(trg))
-      if (src != trg && !e(src).contains(trg) && v(src) != v(trg)) {
-        edgeCounter += 1
-        e(src) = trg :: e(src)
-        e(trg) = src :: e(trg)
-      }
-    }
-  }
-
-  def bindMissingVertices: Boolean = {
-    var ok = true
-
-    println("binding phase")
-    for (i <- 0 until numberOfVertices) {
-      if (e(i).isEmpty) {
-        //Normally, done like this, but for very large sparse graphs, it has a high failure rate.
-        ok = false
-
-        var counter = 0 //we give up if we can't find anything...
-        //We look for another vertex with different color and we delete one of its edges
-        while (!ok && counter < numberOfVertices * 2) {
-          counter += 1
-          val newPair = Random.nextInt(numberOfVertices)
-          if (!e(newPair).isEmpty && v(newPair) != v(i)) {
-            val pairsOfPair = e(newPair).toArray
-            val pairOfPair = pairsOfPair(Random.nextInt(pairsOfPair.size))
-            if (e(pairOfPair).size > 1) {
-              //remove old connection
-              e(pairOfPair) = e(pairOfPair).filter { x => x != newPair }
-              e(newPair) = e(newPair).filter { x => x != pairOfPair }
-              //add new connection
-              e(newPair) = i :: e(newPair)
-              e(i) = newPair :: e(i)
-              ok = true
-            }
-          }
-        }
-      }
-    }
-    ok
-  }
-
-  def verify = {
-    //verification
-    for (i <- 0 until numberOfVertices) {
-      assert(e(i).nonEmpty, s"vertex without connections $i")
-      for (j <- e(i)) {
-        assert(v(i) != v(j), s"colors are the same for $i and $j")
-        assert(Boolean.equiv(e(i).contains(j), e(j).contains(i)), s"edges are not bidirectional for $i and $j")
-      }
-    }
-  }
-
-  def writeAdoptFormat = {
+  def writeAdoptFormat(myGraph: GraphElements) = {
     val targetFile = new java.io.FileWriter(fileName)
     //Agents: AGENT agentId
     for (i <- 0 until numberOfVertices) {
@@ -151,7 +156,7 @@ case class RandomGraphGeneratorRun(
     //Constraints: CONSTRAINT variableId1 variableId2 {opt: weight}
     //             NOGOOD value1 value2
     for (i <- 0 until numberOfVertices) {
-      for (j <- e(i)) {
+      for (j <- myGraph.e(i)) {
         if (i < j) { //No self edges
           targetFile.write(s"CONSTRAINT ${i} ${j}\n")
           for (col <- 0 until numberOfColors) {
@@ -165,11 +170,11 @@ case class RandomGraphGeneratorRun(
     println("Finished generating " + fileName + " in Adopt format.")
   }
 
-  def writeStdFormat = {
+  def writeStdFormat(myGraph: GraphElements) = {
     val targetFile = new java.io.FileWriter(fileName)
-    targetFile.write(numberOfVertices + " " + edgeCounter + " " + edgeDensity + " " + numberOfColors + "\n")
+    targetFile.write(numberOfVertices + " " + myGraph.edgeCounter + " " + edgeDensity + " " + numberOfColors + "\n")
     for (i <- 0 until numberOfVertices) {
-      for (j <- e(i)) {
+      for (j <- myGraph.e(i)) {
         if (i < j) { //No self edges
           targetFile.write(i + " " + j + "\n")
         }
