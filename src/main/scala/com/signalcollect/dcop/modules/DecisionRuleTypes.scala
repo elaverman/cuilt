@@ -143,3 +143,48 @@ trait LinearProbabilisticDecisionRule extends DecisionRule {
 
 }
 
+trait LogisticDecisionRule extends ArgmaxADecisionRule {
+
+  def eta: Double
+
+  /*
+   * In the case where we have a flat distribution and normFactor would be 0, the function should return the first action. 
+   */
+  override def computeMove(c: State): Action = {
+
+    if (eta == 0) {
+      super.computeMove(c)
+    } else {
+      val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+      assert(expectedUtilities.values.forall(_ >= 0))
+      val scaleFactor = expectedUtilities.values.map(v => math.exp(v / eta)).sum
+
+      val intervalSelector = Random.nextDouble * scaleFactor
+
+      if (scaleFactor == 0.0) return c.centralVariableValue
+
+      var partialSum: Double = 0.0
+      for (action <- expectedUtilities.keys) {
+        partialSum += math.exp(expectedUtilities(action) / eta)
+        if (intervalSelector <= partialSum) {
+          return action
+        }
+      }
+      throw new Exception("This code should be unreachable.")
+    }
+  }
+
+}
+
+trait EpsilonGreedyDecisionRule extends ArgmaxADecisionRule {
+  def epsilon: Double
+
+  override def computeMove(c: State): Action = {
+    if (math.random > epsilon) { //Probability 1-epsilon to choose argmax
+      super.computeMove(c)
+    } else { //probability epsilon to choose randomly
+      c.domain.toVector(new Random().nextInt(c.domain.size))
+    }
+  }
+
+}
