@@ -33,7 +33,7 @@ class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {
 
-    val inputFileName:String = s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_${graphNumber}.txt"
+    val inputFileName:String = s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_${graphNumber}.txt"
     val sourceFile = new java.io.File(inputFileName)
     val br = new BufferedReader(new FileReader(sourceFile));
 
@@ -62,8 +62,8 @@ class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity
 
   def size = numberOfVertices //number of vertices
 
-  def maxUtility = numberOfVertices * edgeDensity //number of edges
+  def maxUtility = numberOfVertices * edgeDensity * 2//number of edges per each vertex
 
-  override def toString = "RandomGraph" + size.toString + "density" + edgeDensity + "colors" + numberOfColors
+  override def toString = "RandomGraph" + size.toString + "density" + edgeDensity + "colors" + numberOfColors+"_"+graphNumber
 
 }
