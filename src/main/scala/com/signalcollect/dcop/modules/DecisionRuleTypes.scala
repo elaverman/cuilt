@@ -152,7 +152,7 @@ trait LogisticDecisionRule extends ArgmaxADecisionRule {
    */
   override def computeMove(c: State): Action = {
 
-    if (eta == 0) {
+    if (eta < 0.0001) {
       super.computeMove(c)
     } else {
       val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
