@@ -94,6 +94,7 @@ trait SimpleState extends StateModule {
   }
 }
 
+
 trait StateWithMemory extends StateModule {
   type State <: StateWithMemoryInterface
 
@@ -133,6 +134,54 @@ trait SimpleMemoryState extends StateWithMemory {
       this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
     }
     def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
+      this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
+    }
+    
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+    }
+  }
+}
+
+trait StateWithNeighborMemory extends StateModule {
+  type State <: StateWithNeighborMemoryInterface
+
+  trait StateWithNeighborMemoryInterface extends StateInterface {
+    def memory: Map[AgentId, Map[Action, Double]] //for each neighbor we keep their actions and "how much" they used that action
+    def numberOfCollects: Long //to rename to numberOfUpdates and check
+    def withUpdatedMemory(newMemory: Map[AgentId, Map[Action, Double]]): this.type
+  }
+}
+
+trait SimpleNeighborMemoryState extends StateWithNeighborMemory {
+  type State = SimpleNeighborMemoryStateImplementation
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleNeighborMemoryStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[AgentId, Map[Action, Double]].withDefaultValue(Map.empty[Action, Double]),
+      numberOfCollects = 0)
+  }
+
+  case class SimpleNeighborMemoryStateImplementation(
+    agentId: AgentId,
+    centralVariableValue: Action,
+    domain: Set[Action],
+    neighborActions: Map[AgentId, Action],
+    memory: Map[AgentId, Map[Action, Double]],
+    numberOfCollects: Long //TODO: rename to numberOfUpdates and check
+    ) extends StateWithNeighborMemoryInterface {
+
+    def withCentralVariableAssignment(value: Action) = {
+      this.copy(centralVariableValue = value).asInstanceOf[this.type]
+    }
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
+      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
+    }
+    def withUpdatedMemory(newMemory: Map[AgentId, Map[Action, Double]]) = {
       this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
     }
     

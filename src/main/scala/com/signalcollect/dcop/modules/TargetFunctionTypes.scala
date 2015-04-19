@@ -151,3 +151,47 @@ trait DiscountedAverageRegretsTargetFunction extends AverageRegretsTargetFunctio
 
 }
 
+//trait FictitiousPlayTargetFunction extends TargetFunction with StateWithNeighborMemory {
+//
+//  def computeExpectedUtilities(c: State): Map[Action, UtilityType] = { 
+//    c.domain.map(
+//      action => {
+//        var neighbors = c.memory.map(n => (n._1, 0))
+//        val neighborsIds = neighbors.keys
+//        //backtracking
+//
+//        var neighborConfigAndUtility: Option[(Map[AgentId, Action], Double)] = None
+//        do {
+//          neighborConfigAndUtility = generateConfig
+//
+//        } while (neighborConfigAndUtility != None)
+//        var counter = 0
+//        val maxCount = ??? //c.memory...
+//        var neighbor = neighborsIds
+//
+//        ???
+//
+//      })
+//    ???
+//  }
+//
+//  def computeMemory(state: State): Map[AgentId, Map[Action, Double]] = {
+//    val memory = state.neighborActions.map(
+//      neighborAction => {
+//        val oldPlays = state.memory(neighborAction._1)
+//        val newPlays = oldPlays.map(action =>
+//          {
+//            val newFreq = (if (action._1 == neighborAction._2) { 1 } else { 0 } + action._2 * (state.numberOfCollects - 1)) / state.numberOfCollects
+//            (action._1, newFreq)
+//          })
+//        (neighborAction._1, newPlays)
+//      })
+//    memory
+//  }
+//
+//  override def updateMemory(conf: State): State = {
+//    val newMemory = computeMemory(conf)
+//    conf.withUpdatedMemory(newMemory)
+//  }
+//
+//}
