@@ -61,31 +61,35 @@ case class RandomGraphGeneratorRun(
       e(i) = List()
     }
 
-    def addAllEdges = {
-      while (edgeCounter < numberOfVertices * edgeDensity) {
+    def addAllEdges: Boolean = {
+      var trialCounter = 0
+      while ((edgeCounter < numberOfVertices * edgeDensity) && (trialCounter < numberOfVertices * edgeDensity)) {
         val src = Random.nextInt(numberOfVertices)
         val trg = Random.nextInt(numberOfVertices)
-        //println(src+" "+v(src)+" "+trg+" "+v(trg))
+        println(src + " " + v(src) + " " + trg + " " + v(trg))
         if (src != trg && !e(src).contains(trg) && v(src) != v(trg)) {
           edgeCounter += 1
+          trialCounter = 0
           e(src) = trg :: e(src)
           e(trg) = src :: e(trg)
+        } else {
+          trialCounter += 1
         }
       }
+      (edgeCounter >= numberOfVertices * edgeDensity)
     }
 
     def bindMissingVertices: Boolean = {
       var ok = true
 
-      println("binding phase")
       for (i <- 0 until numberOfVertices) {
         if (e(i).isEmpty) {
           //Normally, done like this, but for very large sparse graphs, it has a high failure rate.
-          ok = false
+          var localok = false
           if (!discardForInitialLonelyVertices) {
             var counter = 0 //we give up if we can't find anything...
             //We look for another vertex with different color and we delete one of its edges
-            while (!ok && counter < numberOfVertices * 2) {
+            while (!localok && counter < numberOfVertices * 2) {
               counter += 1
               val newPair = Random.nextInt(numberOfVertices)
               if (!e(newPair).isEmpty && v(newPair) != v(i)) {
@@ -98,11 +102,13 @@ case class RandomGraphGeneratorRun(
                   //add new connection
                   e(newPair) = i :: e(newPair)
                   e(i) = newPair :: e(i)
-                  ok = true
+                  localok = true
                 }
               }
             }
           }
+          if (localok == false) println("Binding did not work.")
+          ok = ok && localok
         }
       }
       ok
@@ -122,22 +128,27 @@ case class RandomGraphGeneratorRun(
   }
 
   def generate(): List[Map[String, String]] = {
-    val myGraph = new GraphElements()
+
     var ok = false
     var finalResults = List[Map[String, String]]()
     println("Starting generating" + fileName)
 
     while (!ok) {
-      print(".")
-      myGraph.addAllEdges
-      ok = myGraph.bindMissingVertices
+      println("Try")
+      val myGraph = new GraphElements()
+      println("Adding edges")
+      ok = myGraph.addAllEdges
+      if (ok) {
+        println("Binding")
+        ok = myGraph.bindMissingVertices
+        if (ok) {
+          myGraph.verify
+          //Writing to file
+          if (adoptGraphFormat) writeAdoptFormat(myGraph) else writeStdFormat(myGraph)
+        }
+      }
     }
-
-    myGraph.verify
-
-    //Writing to file
-    if (adoptGraphFormat) writeAdoptFormat(myGraph) else writeStdFormat(myGraph)
-
+    println("Ended loop with ok=" + ok)
     finalResults
   }
 
