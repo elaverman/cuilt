@@ -55,31 +55,32 @@ object GraphGeneratorRunner extends App {
   val gru = new SlurmHost(
     jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
     coresPerNode = 10,
+    partition = "minion_su",
     localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
 
   /*********/
   def evalName = s"Graph generator"
-  def evalNumber = 23
+  def evalNumber = 21
   def runs = 1
   def pure = true
   //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken)
   var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
-  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
+//    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
   /*********/
 
-  val numbersOfVertices = Set(40, 80) //(1000000)//, 1000, 10000, 100000)//10)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
+  val numbersOfVertices = Set(10)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
   val edgeDensities = Set(3)
-  val numbersOfColors = Set(5, 4, 3)
-  val numberOfGraphs = 20
+  val numbersOfColors = Set(3)
+  val numberOfGraphs = 10
   val adoptGraphFormat = false
-  val discardForInitialLonelyVertices = true
+  val discardForInitialLonelyVertices = false
 
   for (i <- 0 until numberOfGraphs) {
     for (numberOfVertices <- numbersOfVertices) {
       for (edgeDensity <- edgeDensities) {
         for (numberOfColors <- numbersOfColors) {
-          evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphs/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat, discardForInitialLonelyVertices).generate)
+          evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat, discardForInitialLonelyVertices).generate)
         }
       }
     }
