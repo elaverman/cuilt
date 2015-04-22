@@ -26,9 +26,9 @@ package com.signalcollect.dcop.modules
  */
 
 trait TerminationRule extends Algorithm {
-  
+
   def shouldTerminate(c: State): Boolean
-  
+
 }
 
 trait NashEquilibriumConvergence extends TerminationRule {
@@ -37,12 +37,16 @@ trait NashEquilibriumConvergence extends TerminationRule {
 
 }
 
-
 trait SimulatedAnnealingConvergence extends TerminationRule {
 
-  def deltaComp: Double
+  def negDeltaMax: Double
   def iteration: Int
-  
-  def shouldTerminate(c: State): Boolean = isInLocalOptimum(c) && (scala.math.exp(deltaComp * iteration * iteration) < 0.01)
+  def etaInverse(i: Int): Double
+
+  def shouldTerminate(c: State): Boolean = {
+    val shouldTerminateVal = isInLocalOptimum(c) && (scala.math.exp(negDeltaMax * etaInverse(iteration)) < 0.01)
+    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+    shouldTerminateVal
+  }
 
 }
