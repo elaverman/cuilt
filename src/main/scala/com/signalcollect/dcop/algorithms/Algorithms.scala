@@ -96,11 +96,11 @@ class FmJsfpi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgor
 }
 
 class Rm(changeProbabilityParam: Double) extends IntAlgorithm
-  with SimpleMemoryState
+  with ExtendedMemoryState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
   with LinearProbabilisticDecisionRule
-  with NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
+  with DistributionConvergence//NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
   with AverageRegretsTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {
@@ -109,11 +109,11 @@ class Rm(changeProbabilityParam: Double) extends IntAlgorithm
 }
 
 class Wrmi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgorithm
-  with SimpleMemoryState
+  with ExtendedMemoryState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
   with LinearProbabilisticDecisionRule
-  with NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
+  with DistributionConvergence//NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
   with DiscountedAverageRegretsTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {

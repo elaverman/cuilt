@@ -100,7 +100,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule with StateWithMemory {
 
   def etaInverse(i: Long) = {
     val iToK = math.pow(i, k)
-    assert(math.pow(i,2) == i* i)
+    assert(math.pow(i, 2) == i * i)
     iToK / const
   }
   //var deltaComp = 0.0
@@ -108,7 +108,7 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule with StateWithMemory {
   assert(negDeltaMax < 0, "negDeltaMax must be smaller than 0.")
 
   override def computeMove(c: State) = {
-//    println("Iteration in computeMove:" + c.agentId + "-" + c.numberOfCollects)
+    //    println("Iteration in computeMove:" + c.agentId + "-" + c.numberOfCollects)
     val randomMove = c.domain.toSeq(Random.nextInt(c.domain.size))
     val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
     val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
@@ -157,13 +157,14 @@ trait LogisticDecisionRule extends ArgmaxADecisionRule {
    */
   override def computeMove(c: State): Action = {
 
-    if (eta < 0.0001) {
+    if (eta < 0.5) {
       super.computeMove(c)
     } else {
       val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
       assert(expectedUtilities.values.forall(_ >= 0))
       val scaleFactor = expectedUtilities.values.map(v => math.exp(v / eta)).sum
-
+      //if (c.agentId == 1)
+       // println(c.agentId+"scaleFactor = " + scaleFactor + " " + expectedUtilities)
       val intervalSelector = Random.nextDouble * scaleFactor
 
       if (scaleFactor == 0.0) return c.centralVariableValue

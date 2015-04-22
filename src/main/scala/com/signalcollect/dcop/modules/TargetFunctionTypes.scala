@@ -129,6 +129,7 @@ trait AverageRegretsTargetFunction extends MemoryLessTargetFunction with StateWi
   }
 
   def computeMemory(state: State): Map[Action, UtilityType] = {
+//    println(state.agentId +"->"+state.numberOfCollects)
     val memory = computeCandidates(state).map(candidate => {
       val newMemoryForCandidate = if (state.numberOfCollects == 0) {
         computeUtility(candidate) - computeUtility(state)

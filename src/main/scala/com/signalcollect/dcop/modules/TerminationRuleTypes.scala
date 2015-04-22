@@ -44,7 +44,21 @@ trait SimulatedAnnealingConvergence extends TerminationRule with StateWithMemory
 
   def shouldTerminate(c: State): Boolean = {
     val shouldTerminateVal = isInLocalOptimum(c) && (scala.math.exp(negDeltaMax * etaInverse(c.numberOfCollects)) < 0.001)
-//    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+    //    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+    shouldTerminateVal
+  }
+
+}
+
+trait DistributionConvergence extends TerminationRule with ExtendedMemoryState {
+
+  def shouldTerminate(c: State): Boolean = {
+
+    val shouldTerminateVal = /*isInLocalOptimum(c) &&*/ c.memoryConverged
+    
+//      println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+//    if (shouldTerminateVal == false)
+//      println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + c.memory)
     shouldTerminateVal
   }
 
