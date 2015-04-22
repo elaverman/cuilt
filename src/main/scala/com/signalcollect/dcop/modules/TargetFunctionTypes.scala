@@ -52,6 +52,23 @@ trait MemoryLessTargetFunction extends TargetFunction {
   override def updateMemory(c: State): State = c
 }
 
+trait NumberOfCollectsTargetFunction extends TargetFunction with StateWithMemory {
+
+  def computeExpectedUtilityForStateValue(c: State): (Action, UtilityType) = {
+    (c.centralVariableValue, computeUtility(c))
+  }
+
+  def computeExpectedUtilities(c: State): Map[Action, UtilityType] = {
+    val configUtilities = computeCandidates(c).map(computeExpectedUtilityForStateValue(_)).toMap
+    configUtilities
+  }
+
+  override def updateMemory(c: State): State = {
+    val emptyMap = Map[Action, UtilityType]().empty
+    c.withUpdatedMemory(emptyMap)
+  }
+}
+
 /*
  * Used in JSFP-I
  */

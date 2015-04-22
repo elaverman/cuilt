@@ -37,15 +37,14 @@ trait NashEquilibriumConvergence extends TerminationRule {
 
 }
 
-trait SimulatedAnnealingConvergence extends TerminationRule {
+trait SimulatedAnnealingConvergence extends TerminationRule with StateWithMemory {
 
   def negDeltaMax: Double
-  def iteration: Int
-  def etaInverse(i: Int): Double
+  def etaInverse(i: Long): Double
 
   def shouldTerminate(c: State): Boolean = {
-    val shouldTerminateVal = isInLocalOptimum(c) && (scala.math.exp(negDeltaMax * etaInverse(iteration)) < 0.01)
-    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+    val shouldTerminateVal = isInLocalOptimum(c) && (scala.math.exp(negDeltaMax * etaInverse(c.numberOfCollects)) < 0.001)
+//    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
     shouldTerminateVal
   }
 

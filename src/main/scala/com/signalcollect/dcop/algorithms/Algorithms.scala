@@ -52,17 +52,18 @@ class DsaB(changeProbabilityParam: Double) extends IntAlgorithm
 }
 
 class Dsan(changeProbabilityParam: Double, constant: Double, kval: Double) extends IntAlgorithm
-  with SimpleState
+  with SimpleNumberOfCollectsState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
   with SimulatedAnnealingDecisionRule
   with SimulatedAnnealingConvergence
-  with MemoryLessTargetFunction
+  with NumberOfCollectsTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {
   def changeProbability = changeProbabilityParam
   def const = constant
   def k = kval
+  def negDeltaMax = -0.01
   def algorithmName = "Dsan" + changeProbabilityParam + "const" + constant + "k" + kval
 }
 

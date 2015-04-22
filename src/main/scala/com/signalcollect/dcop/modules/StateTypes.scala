@@ -143,6 +143,45 @@ trait SimpleMemoryState extends StateWithMemory {
   }
 }
 
+trait SimpleNumberOfCollectsState extends StateWithMemory {
+  type State = SimpleNumberOfCollectsStateImplementation
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleNumberOfCollectsStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[Action, Double].withDefaultValue(0.0),
+      numberOfCollects = 0)
+  }
+
+  case class SimpleNumberOfCollectsStateImplementation(
+    agentId: AgentId,
+    centralVariableValue: Action,
+    domain: Set[Action],
+    neighborActions: Map[AgentId, Action],
+    memory: Map[Action, UtilityType],
+    numberOfCollects: Long //TODO: rename to numberOfUpdates and check
+    ) extends StateWithMemoryInterface {
+
+    def withCentralVariableAssignment(value: Action) = {
+      this.copy(centralVariableValue = value).asInstanceOf[this.type]
+    }
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
+      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
+    }
+    def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
+      this.copy(numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
+    }
+    
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+    }
+  }
+}
+
+
 trait StateWithNeighborMemory extends StateModule {
   type State <: StateWithNeighborMemoryInterface
 

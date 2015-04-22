@@ -93,24 +93,27 @@ trait ArgmaxBDecisionRule extends DecisionRule {
 
 }
 
-trait SimulatedAnnealingDecisionRule extends DecisionRule {
+trait SimulatedAnnealingDecisionRule extends DecisionRule with StateWithMemory {
 
   def const: Double
   def k: Double
-  var iteration = 0
 
-  def etaInverse(i: Int) = i * i / const
+  def etaInverse(i: Long) = {
+    val iToK = math.pow(i, k)
+    assert(math.pow(i,2) == i* i)
+    iToK / const
+  }
   //var deltaComp = 0.0
-  val negDeltaMax = -0.01
+  def negDeltaMax: Double
+  assert(negDeltaMax < 0, "negDeltaMax must be smaller than 0.")
 
   override def computeMove(c: State) = {
-    iteration += 1
-    println("Iteration in computeMove:" + c.agentId + "-" + iteration)
+//    println("Iteration in computeMove:" + c.agentId + "-" + c.numberOfCollects)
     val randomMove = c.domain.toSeq(Random.nextInt(c.domain.size))
     val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
     val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
     //deltaComp = delta
-    val probab = if (delta == 0) scala.math.exp(negDeltaMax * etaInverse(iteration)) else scala.math.exp(delta * etaInverse(iteration))
+    val probab = if (delta == 0) scala.math.exp(negDeltaMax * etaInverse(c.numberOfCollects)) else scala.math.exp(delta * etaInverse(c.numberOfCollects))
     if (delta > 0 || (delta <= 0 && Random.nextDouble <= probab)) {
       randomMove
     } else {
