@@ -69,7 +69,7 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
 
     override def scoreSignal: Double = {
       if (sendMessageToMyself) {
-        //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): Send messageBack " + state + " msgBack? " + sendMessageToMyself)
+//        println(s"SignalCollectAlgorithmBridge.scoreSignal($id): Send messageBack " + state + " msgBack? " + sendMessageToMyself)
         1
       } else {
         if (edgesModifiedSinceSignalOperation) {
@@ -79,15 +79,15 @@ trait SignalCollectAlgorithmBridge extends Algorithm {
           lastSignalState match {
             case Some(oldState) => {
               if (isStateUnchanged(oldState, state) && isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue))) {
-                //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): No Signal for state " + state + " msgBack? " + sendMessageToMyself)
+//                println(s"SignalCollectAlgorithmBridge.scoreSignal($id): No Signal for state " + state + " msgBack? " + sendMessageToMyself)
                 0
               } else {
-                //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): " + state.agentId + "-> unchanged? " + isStateUnchanged(oldState, state) + " " + oldState + " " + state + " converged? " + isConverged(state) + " converged last step? " + isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)) + " msgBack? " + sendMessageToMyself)
+//                println(s"SignalCollectAlgorithmBridge.scoreSignal($id): " + state.agentId + "-> unchanged? " + isStateUnchanged(oldState, state) + " " + oldState + " " + state + " converged? " + isConverged(state) + " converged last step? " + isConverged(state.withCentralVariableAssignment(oldState.centralVariableValue)) + " msgBack? " + sendMessageToMyself)
                 1
               }
             }
             case noStateOrStateChanged => {
-              //println(s"SignalCollectAlgorithmBridge.scoreSignal($id): noState")
+//              println(s"SignalCollectAlgorithmBridge.scoreSignal($id): noState")
               1
             }
           }
