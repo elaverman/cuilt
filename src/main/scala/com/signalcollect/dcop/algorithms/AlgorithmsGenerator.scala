@@ -68,9 +68,9 @@ object AlgorithmsGenerator extends App {
   val decisionRules: List[DecisionRuleTemplate] = List(
     new DecisionRuleTemplate("ArgmaxADecisionRule", "NashEquilibriumConvergence", Map.empty),
     new DecisionRuleTemplate("ArgmaxBDecisionRule", "NashEquilibriumConvergence", Map.empty),
-    new DecisionRuleTemplate("EpsilonGreedyDecisionRule", "NashEquilibriumConvergence", Map(("epsilon", List(0.001, 0.01, 0.1)))) //    new DecisionRuleTemplate("SimulatedAnnealingDecisionRule", "SimulatedAnnealingConvergence", Map(("const", List(1000, 1)), ("kval", List(2)))),
-    //    new DecisionRuleTemplate("LinearProbabilisticDecisionRule", "DistributionConvergence", Map.empty),
-    //    new DecisionRuleTemplate("LogisticDecisionRule", "DistributionConvergence", Map(("eta", List(1, 100, 10000))))
+    new DecisionRuleTemplate("EpsilonGreedyDecisionRule", "NashEquilibriumConvergence", Map(("epsilon", List(0.001, 0.01, 0.1)))),
+    new DecisionRuleTemplate("SimulatedAnnealingDecisionRule", "SimulatedAnnealingConvergence", Map(("const", List(1000, 1)), ("k", List(2)), ("negDeltaMax", List(-0.01, -0.0001)))),
+    new DecisionRuleTemplate("LinearProbabilisticDecisionRule", "DistributionConvergence", Map.empty) //    new DecisionRuleTemplate("LogisticDecisionRule", "DistributionConvergence", Map(("eta", List(1, 100, 10000))))
     )
 
   def combine(a: List[List[(String, Double)]], b: (String, List[Double])): List[List[(String, Double)]] = {
@@ -187,14 +187,20 @@ object MixedAlgorithmList {
 
       defs = defs + s"""               def algorithmName = $className"""
 
+      val theState = if (t.state == "SimpleState" && d.name == "SimulatedAnnealingDecisionRule") {
+        "SimpleNumberOfCollectsState"
+      } else if (d.name == "LinearProbabilisticDecisionRule") {
+        "ExtendedMemoryState"
+      } else { t.state }
+
       if (counter == allCombinations.size && !isSecondTime)
         file1.write(s"""class $classNameShort($parListClass) extends IntAlgorithm
-            with ${t.state}
+            with ${theState}
             with VertexColoringUtility
             with ${a.name}
             with ${d.name}
             with ${d.terminationRule}
-            with ${t.name}
+            with ${if (t.name == "MemoryLessTargetFunction" && d.name == "SimulatedAnnealingDecisionRule") "NumberOfCollectsTargetFunction" else t.name}
             with SignalCollectAlgorithmBridge
             with Execution {
 ${defs}
@@ -212,8 +218,8 @@ ${defs}
   var counter = 0
   val numberOfSync = targetFunctions.size * decisionRules.size * adjustmentSchedulesSync.size
   for (asSync <- adjustmentSchedulesSync) {
-    for (t <- targetFunctions) {
-      for (d <- decisionRules) {
+    for (d <- decisionRules) {
+      for (t <- targetFunctions) {
 
         counter += 1
         printClass(algorithmsFile, listFile, t, asSync, d, counter == numberOfSync, isSecondTime = false)
@@ -228,8 +234,9 @@ ${defs}
 """)
 
   for (asAsync <- adjustmentSchedulesAsync) {
-    for (t <- targetFunctions) {
-      for (d <- decisionRules) {
+    for (d <- decisionRules) {
+      for (t <- targetFunctions) {
+
         counter += 1
         printClass(algorithmsFile, listFile, t, asAsync, d, counter == numberOfSync, isSecondTime = true)
       }
