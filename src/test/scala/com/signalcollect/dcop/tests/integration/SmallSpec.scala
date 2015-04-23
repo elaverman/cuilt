@@ -125,21 +125,24 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers with TestTool
         val g = gb.build()
         try {
 
-          val execMode = ExecutionMode.Synchronous//executionModes((Math.abs(execModePar % executionModes.size)))
+          val execMode = ExecutionMode.Synchronous //executionModes((Math.abs(execModePar % executionModes.size)))
 
           val conflictsHistory = collection.mutable.Map.empty[Int, Long]
           val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-          val executionConfig = ExecutionConfiguration.withExecutionMode(execMode).withTimeLimit(5000)
+          val executionConfig = ExecutionConfiguration.withExecutionMode(execMode).withTimeLimit(50000) //(5000)
 
           val stats = g.execute(executionConfig)
-          
-          
 
           def stateOfVertex(id: Int) = g.forVertexWithId[Vertex[myAlgo.AgentId, myAlgo.State, Any, Any], myAlgo.State](id, x => x.state)
 
           val isNe = g.mapReduce[myAlgo.DcopVertex, Boolean](
             { v => { myAlgo.isInLocalOptimum(v.state) } },
+            { case (t1, t2) => t1 && t2 },
+            true)
+
+          val isMemConv = g.mapReduce[myAlgo.DcopVertex, Boolean](
+            { v => { v.state.memoryConverged } },
             { case (t1, t2) => t1 && t2 },
             true)
 
@@ -160,13 +163,13 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers with TestTool
 
           //assert(stats.executionStatistics.terminationReason.toString == "Converged", "Not converged within time limit")
 
-          //          for (i <- 0 until width) {
-          //            for (j <- 0 until width) {
-          //              print(stateOfVertex(i * width + j).centralVariableValue + " ")
-          //            }
-          //            println
-          //          }
-          //          println
+          for (i <- 0 until width) {
+            for (j <- 0 until width) {
+              print(stateOfVertex(i * width + j).centralVariableValue + " ")
+            }
+            println
+          }
+          println
 
           def info(c: myAlgo.State): String = {
             val expectedUtilities: Map[myAlgo.Action, Double] = myAlgo.computeExpectedUtilities(c)
@@ -187,13 +190,16 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers with TestTool
           }
 
           for (i <- (0 until width * width)) {
+            val stateOfVi = stateOfVertex(i)
+            if (!stateOfVi.memoryConverged) println(info(stateOfVi))
             for (j <- gb.computeNeighbours(i)) {
-              val stateOfVi = stateOfVertex(i)
               val stateOfVj = stateOfVertex(j)
               assert(stateOfVi.centralVariableValue != stateOfVj.centralVariableValue, s"Vertex ${stateOfVi} and vertex ${stateOfVj} have a color collision in test run $runId, with execution mode $execMode. \n ${info(stateOfVi)}, ${info(stateOfVj)}")
             }
           }
-          checkAssertions(runId, terminationReason, isNe.toString, isOptimal.toString, isAbsorbing = true, mustConverge = true, extraInfo = nonNe)
+          val extraInfo = nonNe
+          assert(implies(terminationReason == "Converged", isMemConv == true), s"Termination reason $terminationReason, NE $isNe in run $runId, isMemConv $isMemConv. $extraInfo") // for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          assert(implies((isNe == true && isMemConv == true), terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId. NE should be absorbing. $extraInfo")
 
           res = true
 
@@ -206,7 +212,7 @@ class SmallSpec extends FlatSpec with ShouldMatchers with Checkers with TestTool
         }
         res
       },
-      minSuccessful(100))
+      minSuccessful(10))
   }
 
 }
