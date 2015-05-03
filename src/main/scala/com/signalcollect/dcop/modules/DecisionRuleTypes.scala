@@ -34,8 +34,8 @@ trait DecisionRule extends Algorithm {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
     val maxUtility = expectedUtilities.values.max
     val res = isInLocalOptimumGivenUtilitiesAndMaxUtility(c, expectedUtilities, maxUtility)
-    //    if (!res) 
-    //      println("###"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
+    //        if (!res) 
+    //          println("###DecisionRule.isInLocalOptimum"+c.agentId+"->"+c.centralVariableValue+": util: "+expectedUtilities.toString)
     res
   }
 
@@ -93,22 +93,27 @@ trait ArgmaxBDecisionRule extends DecisionRule {
 
 }
 
-trait SimulatedAnnealingDecisionRule extends DecisionRule {
+trait SimulatedAnnealingDecisionRule extends DecisionRule with StateWithMemory {
 
   def const: Double
   def k: Double
-  var iteration = 0
 
-  def etaInverse(i: Int) =  i * i /const
-  var deltaComp = 0.0
+  def etaInverse(i: Long) = {
+    val iToK = math.pow(i, k)
+    assert(math.pow(i, 2) == i * i)
+    iToK / const
+  }
+  //var deltaComp = 0.0
+  def negDeltaMax: Double
+  assert(negDeltaMax < 0, "negDeltaMax must be smaller than 0.")
 
   override def computeMove(c: State) = {
-    iteration += 1
+    //    println("Iteration in computeMove:" + c.agentId + "-" + c.numberOfCollects)
     val randomMove = c.domain.toSeq(Random.nextInt(c.domain.size))
     val expectedUtilities = computeExpectedUtilities(c).toMap[Action, Double]
     val delta = expectedUtilities.getOrElse[Double](randomMove, -1) - expectedUtilities.getOrElse[Double](c.centralVariableValue, -1)
-    deltaComp = delta
-    val probab = if (delta == 0) 0.001 else scala.math.exp(delta *  etaInverse(iteration))
+    //deltaComp = delta
+    val probab = if (delta == 0) scala.math.exp(negDeltaMax * etaInverse(c.numberOfCollects)) else scala.math.exp(delta * etaInverse(c.numberOfCollects))
     if (delta > 0 || (delta <= 0 && Random.nextDouble <= probab)) {
       randomMove
     } else {
@@ -120,19 +125,21 @@ trait SimulatedAnnealingDecisionRule extends DecisionRule {
 
 trait LinearProbabilisticDecisionRule extends DecisionRule {
 
-
   /*
    * In the case where we have a flat distribution and normFactor would be 0, the function should return the first action. 
    */
   override def computeMove(c: State): Action = {
     val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
-    val normFactor = expectedUtilities.values.sum
-    val selectionProb = Random.nextDouble
+    assert(expectedUtilities.values.forall(_ >= 0))
+    val scaleFactor = expectedUtilities.values.sum
+    val intervalSelector = Random.nextDouble * scaleFactor
+
+    if (scaleFactor == 0.0) return c.centralVariableValue
 
     var partialSum: Double = 0.0
     for (action <- expectedUtilities.keys) {
       partialSum += expectedUtilities(action)
-      if (selectionProb * normFactor <= partialSum) {
+      if (intervalSelector <= partialSum) {
         return action
       }
     }
@@ -141,3 +148,49 @@ trait LinearProbabilisticDecisionRule extends DecisionRule {
 
 }
 
+trait LogisticDecisionRule extends ArgmaxADecisionRule {
+
+  def eta: Double
+
+  /*
+   * In the case where we have a flat distribution and normFactor would be 0, the function should return the first action. 
+   */
+  override def computeMove(c: State): Action = {
+
+    if (eta < 0.5) {
+      super.computeMove(c)
+    } else {
+      val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+      assert(expectedUtilities.values.forall(_ >= 0))
+      val scaleFactor = expectedUtilities.values.map(v => math.exp(v / eta)).sum
+      //if (c.agentId == 1)
+       // println(c.agentId+"scaleFactor = " + scaleFactor + " " + expectedUtilities)
+      val intervalSelector = Random.nextDouble * scaleFactor
+
+      if (scaleFactor == 0.0) return c.centralVariableValue
+
+      var partialSum: Double = 0.0
+      for (action <- expectedUtilities.keys) {
+        partialSum += math.exp(expectedUtilities(action) / eta)
+        if (intervalSelector <= partialSum) {
+          return action
+        }
+      }
+      throw new Exception("This code should be unreachable.")
+    }
+  }
+
+}
+
+trait EpsilonGreedyDecisionRule extends ArgmaxADecisionRule {
+  def epsilon: Double
+
+  override def computeMove(c: State): Action = {
+    if (math.random > epsilon) { //Probability 1-epsilon to choose argmax
+      super.computeMove(c)
+    } else { //probability epsilon to choose randomly
+      c.domain.toVector(new Random().nextInt(c.domain.size))
+    }
+  }
+
+}

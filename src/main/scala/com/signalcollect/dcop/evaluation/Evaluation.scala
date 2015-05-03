@@ -20,7 +20,9 @@
 
 package com.signalcollect.dcop.evaluation
 
-import com.signalcollect.nodeprovisioning.torque._
+import com.signalcollect.nodeprovisioning.slurm._
+import com.signalcollect.nodeprovisioning.ExecutionHost
+import com.signalcollect.nodeprovisioning.Job
 
 case class Evaluation(
   evaluationName: String,

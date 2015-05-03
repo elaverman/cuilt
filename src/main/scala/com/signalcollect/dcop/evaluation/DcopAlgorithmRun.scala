@@ -20,7 +20,6 @@
 
 package com.signalcollect.dcop.evaluation
 
-import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules._
 import com.signalcollect._
 import java.util.Date
@@ -28,8 +27,12 @@ import com.signalcollect.dcop._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.interfaces.ModularAggregationOperation
+import scala.util.Random
 
 trait Execution extends SignalCollectAlgorithmBridge {
+
+  def logger = false
+  def isGrid = true
 
   /*
  * Returns true iff for each vertex, there is no state with better expected utility than the current one.
@@ -184,14 +187,14 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val numberOfVerticesInLocalOptima = g.aggregate(NumberOfLocalOptimaCounter)
       conflictsHistory += ((steps, numberOfConflictsHistory))
       localOptimaHistory += ((steps, numberOfVerticesInLocalOptima))
-      val (isInLocalOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
+      val (isInLocOptimum, numberOfConflicts) = g.aggregate(MultiAggregator(LocalOptimumDetector, NumberOfConflictsCounter))
       extraStats.updateAvgGlobal(numberOfConflicts, steps)
       //TODO verify
-      if (isInLocalOptimum && steps > 0) {
+      if (isInLocOptimum && steps > 0) {
         extraStats.updateTimeToFirstLocOptimum(steps)
       }
 
-      //println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
+      println("Step " + steps + ", conflicts " + numberOfConflicts + ", localOptima " + numberOfVerticesInLocalOptima)
       val actions = g.aggregate(ActionDetector)
 
       var a: Array[Long] = new Array(actions.size)
@@ -203,14 +206,50 @@ trait Execution extends SignalCollectAlgorithmBridge {
       //      }
       //      println
 
-      //      val width = math.floor(math.sqrt(a.size)).toInt
-      //
-      //      for (i <- 0 until width) {
-      //        for (j <- 0 until width) {
-      //          print(a(i * width + j) + " ")
-      //        }
-      //        println
-      //      }
+      val width = math.floor(math.sqrt(a.size)).toInt
+
+      // ---
+      def info(c: State): String = {
+        val expectedUtilities: Map[Action, Double] = computeExpectedUtilities(c)
+        val normFactor = expectedUtilities.values.sum
+        val selectionProb = Random.nextDouble
+
+        var string = c.agentId + "INFO[" + isInLocalOptimum(c).toString + " regret: " + expectedUtilities + " " + c + "]" //" " + normFactor + " " + selectionProb + " "
+        /*
+        var partialSum: Double = 0.0
+        for (action <- expectedUtilities.keys) {
+          partialSum += expectedUtilities(action)
+          if (selectionProb * normFactor <= partialSum) {
+            string = string + action.toString + "]"
+            return string
+          }
+        }
+        */
+        string
+      }
+
+      def stateOfVertex(id: Int) = g.forVertexWithId[Vertex[AgentId, State, Any, Any], State](id, x => x.state)
+
+      if (logger == true && isGrid == true) {
+
+        println("Step" + steps)
+
+        //TODO put this under logging
+        for (i <- 0 until width) {
+          for (j <- 0 until width) {
+            println(info(stateOfVertex(i * width + j)) + " ")
+          }
+        }
+        println
+
+        for (i <- 0 until width) {
+          for (j <- 0 until width) {
+            print(a(i * width + j) + " ")
+          }
+          println
+        }
+        println
+      }
 
       steps += 1
       false
@@ -260,13 +299,10 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
     def runAlgorithm(): List[Map[String, String]] = {
 
-      println("Time" + System.nanoTime())
-
       val evaluationGraph = graphInstantiator.build(GraphBuilder)
 
       println("Graph is " + graphInstantiator)
       println("Starting.")
-      println("Time" + System.nanoTime())
 
       var computeRanks = false
 
@@ -289,8 +325,6 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val conflictsHistory = collection.mutable.Map.empty[Int, Long]
       val localOptimaHistory = collection.mutable.Map.empty[Int, Long]
 
-      println(evaluationGraph)
-
       val usedExecutionConfig =
         if (aggregationInterval <= 0) {
           println("No extensive stats will be gathered.")
@@ -308,7 +342,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
           executionConfig.withGlobalTerminationDetection(extensiveTerminationDetector)
         }
 
-      println("*Executing...")
+      println(s"*Execution started at time${System.nanoTime()}...")
 
       val date: Date = new Date
       val startTime = System.nanoTime()
@@ -347,7 +381,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
       val messagesPerVertexPerStep = stats.aggregatedWorkerStatistics.signalMessagesReceived.toDouble / (graphSize.toDouble * executionConfig.stepsLimit.getOrElse(1.toLong))
       runResult += s"evaluationDescription" -> evaluationDescription //
       runResult += s"optimizer" -> algorithmName //
-      runResult += s"utility" -> utility.toString.replace(".", ",")
+      runResult += s"utility" -> utility.toString//.replace(".", ",")
       runResult += s"domainSize" -> domainSize.toString
       runResult += s"graphSize" -> graphSize.toString //
       runResult += s"numberOfEdges" -> numberOfEdges.toString //
@@ -355,11 +389,11 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"conflictCount" -> conflictCount.toString //
       runResult += s"numberOfLocOptima" -> numberOfLocalOptima.toString //
       runResult += s"isNe" -> isNe.toString //
-      runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString.replace(".", ",") // Measure (1)
-      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString.replace(".", ",") // Measure (2)
+      runResult += s"avgGlobalUtilityRatio" -> precision(avgGlobalUtilityRatio).toString//.replace(".", ",") // Measure (1)
+      runResult += s"endUtilityRatio" -> precision(endUtilityRatio).toString//.replace(".", ",") // Measure (2)
       runResult += s"isOptimal" -> isOptimal.toString // Measure (3)
       runResult += s"timeToFirstLocOptimum" -> timeToFirstLocOptimum.toString // Measure (4)
-      runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString.replace(".", ",") // Measure (5)
+      runResult += s"messagesPerVertexPerStep" -> precision(messagesPerVertexPerStep).toString//.replace(".", ",") // Measure (5)
       runResult += s"revision" -> revision
       runResult += s"aggregationInterval" -> aggregationInterval.toString
       runResult += s"run" -> runNumber.toString
@@ -367,15 +401,15 @@ trait Execution extends SignalCollectAlgorithmBridge {
       runResult += s"timeLimit" -> executionConfig.timeLimit.toString
       runResult += s"graphStructure" -> graphInstantiator.toString //
 
-      runResult += s"computationTimeInMilliseconds" -> executionTime.toString.replace(".", ",") //
+      runResult += s"computationTimeInMilliseconds" -> executionTime.toString//.replace(".", ",") //
       runResult += s"date" -> date.toString //
       runResult += s"executionHostname" -> java.net.InetAddress.getLocalHost.getHostName //
       runResult += s"numberOfCollectSteps" -> stats.executionStatistics.collectSteps.toString //
       runResult += s"numberOfSignalSteps" -> stats.executionStatistics.signalSteps.toString //
       runResult += s"computationTime" -> stats.executionStatistics.computationTime.toString //
       runResult += s"terminationReason" -> stats.executionStatistics.terminationReason.toString //
-      runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString.replace(".", ",") // 
-      runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString.replace(".", ",") //
+      runResult += s"signalThreshold" -> executionConfig.signalThreshold.toString//.replace(".", ",") // 
+      runResult += s"collectThreshold" -> executionConfig.collectThreshold.toString//.replace(".", ",") //
 
       var a: Array[Long] = new Array(conflictsHistory.size)
       conflictsHistory.foreach(x => { a(x._1) = x._2 })

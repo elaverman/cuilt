@@ -33,20 +33,171 @@ import com.signalcollect.dcop.algorithms._
 import com.signalcollect.dcop.evaluation._
 import com.signalcollect.dcop.graph._
 import com.signalcollect.dcop.modules.IntAlgorithm
-import com.signalcollect.nodeprovisioning.torque.LocalHost
+import com.signalcollect.nodeprovisioning.slurm.LocalHost
 
-class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
+class GridEvalSpec extends FlatSpec with ShouldMatchers with Checkers with TestTools {
 
-  var runId = 0
-  val executionModes = List(ExecutionMode.OptimizedAsynchronous, ExecutionMode.PureAsynchronous, ExecutionMode.Synchronous)
+  "DsaA" should "converge in a 1x1 grid in async mode with global termination condition in less than 5 seconds" in {
+    check(
+      (execModePar: Int) => {
+        runId += 1
 
-  //    lazy val smallWidth = Gen.chooseNum(1, 10)//.map(Width(_))
-  //  implicit def arbSmallWidth[Int] = Arbitrary(smallWidth)
-  implicit lazy val arbInt = Arbitrary[Int](Gen.chooseNum(0, 200))
+        var results = List[Map[String, String]]()
 
-  def zeroInitialized(domain: Set[Int]) = 0
-  val debug = false
-  val localHost = new LocalHost
+        class ResultList extends Function1[Map[String, String], Unit]
+          with Serializable {
+
+          def apply(data: Map[String, String]) = {
+            results = data :: results
+          }
+        }
+
+        /*********/
+        val evalName = "miniTestEvaluation"
+        var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList)
+        /*********/
+
+        val numberOfColors = 4
+        val gridWidth = 1
+        val em = ExecutionMode.PureAsynchronous
+        val myAlgorithm = new DsaA(0.7)
+        val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+        val myAggregationInterval = 100
+        val myFullHistory = false
+
+        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
+          graphInstantiator = myGrid,
+          maxUtility = myGrid.maxUtility,
+          domainSize = numberOfColors,
+          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
+          runNumber = runId,
+          aggregationInterval = myAggregationInterval,
+          fullHistoryStats = myFullHistory,
+          revision = "-1",
+          evaluationDescription = evalName).runAlgorithm)
+
+        evaluation.execute
+
+        for (res <- results) {
+          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
+          val isNe = res.getOrElse("isNe", "NotDetected")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
+        }
+
+        true
+      },
+      minSuccessful(10))
+  }
+
+  it should "converge in an overconstrained grid in async mode in less than 5 seconds" in {
+    check(
+      (execModePar: Int) => {
+        runId += 1
+
+        var results = List[Map[String, String]]()
+
+        class ResultList extends Function1[Map[String, String], Unit]
+          with Serializable {
+
+          def apply(data: Map[String, String]) = {
+            results = data :: results
+          }
+        }
+
+        /*********/
+        val evalName = "miniTestEvaluation"
+        var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
+        /*********/
+
+        val numberOfColors = 1
+        val gridWidth = 5
+        val em = ExecutionMode.OptimizedAsynchronous
+        val myAlgorithm = new DsaB(1.0)
+        val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+        val myAggregationInterval = 100
+        val myFullHistory = false
+
+        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
+          graphInstantiator = myGrid,
+          maxUtility = myGrid.maxUtility,
+          domainSize = numberOfColors,
+          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
+          runNumber = runId,
+          aggregationInterval = myAggregationInterval,
+          fullHistoryStats = myFullHistory,
+          revision = "-1",
+          evaluationDescription = evalName).runAlgorithm)
+
+        evaluation.execute
+
+        for (res <- results) {
+          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
+          val isNe = res.getOrElse("isNe", "NotDetected")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
+        }
+
+        true
+      },
+      minSuccessful(10))
+  }
+
+  it should "converge in a 3x3 grid in Sync mode with high inertia condition in less than 5 seconds" in {
+    check(
+      (execModePar: Int) => {
+        runId += 1
+
+        var results = List[Map[String, String]]()
+
+        class ResultList extends Function1[Map[String, String], Unit]
+          with Serializable {
+
+          def apply(data: Map[String, String]) = {
+            results = data :: results
+          }
+        }
+
+        /*********/
+        val evalName = "miniTestEvaluation"
+        var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
+        /*********/
+
+        val numberOfColors = 4
+        val gridWidth = 3
+        val em = ExecutionMode.Synchronous
+        val myAlgorithm = new DsaA(0.2)
+        val myGrid = new GridInstantiator(myAlgorithm, gridWidth, domain = (0 until numberOfColors).toSet)
+        val myAggregationInterval = 1
+        val myFullHistory = true
+
+        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
+          graphInstantiator = myGrid,
+          maxUtility = myGrid.maxUtility,
+          domainSize = numberOfColors,
+          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000),
+          runNumber = runId,
+          aggregationInterval = myAggregationInterval,
+          fullHistoryStats = myFullHistory,
+          revision = "-1",
+          evaluationDescription = evalName).runAlgorithm)
+
+        evaluation.execute
+
+        for (res <- results) {
+          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
+          val isNe = res.getOrElse("isNe", "NotDetected")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
+        }
+
+        true
+      },
+      minSuccessful(10))
+  }
 
   "Dsa" should "converge in a 10 vertex graph in async mode with global termination condition in less than 5 seconds" in {
     check(
@@ -92,8 +243,9 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
         }
 
         true
@@ -139,12 +291,13 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
           evaluationDescription = evalName).runAlgorithm)
 
         evaluation.execute
-        
+
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          // assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, GRID(width = $gridWidth, colors = $numberOfColors), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
         }
 
         true
@@ -194,73 +347,14 @@ class RandomGraphEvalSpec extends FlatSpec with ShouldMatchers with Checkers {
         for (res <- results) {
           val terminationReason = res.getOrElse("terminationReason", "NotDetected")
           val isNe = res.getOrElse("isNe", "NotDetected")
-          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did not converged but not in NE in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
+          val isOptimal = res.getOrElse("isOptimal", "NotDetected")
+
+          checkAssertions(runId, terminationReason, isNe, isOptimal, isAbsorbing = true, mustConverge = true)
         }
 
         true
       },
       minSuccessful(10))
-  }
-
-  "VertexColoringAlgorithms" should "converge in a randgraph in less than 1 minute" in {
-    check(
-      (execModePar: Int, algorithmNumber: Int, aggregation: Boolean, full: Boolean) => {
-        runId += 1
-
-        var results = List[Map[String, String]]()
-
-        class ResultList extends Function1[Map[String, String], Unit]
-          with Serializable {
-
-          def apply(data: Map[String, String]) = {
-            results = data :: results
-          }
-        }
-
-        /*********/
-        val evalName = "testEvaluation"
-        var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = 1, executionHost = localHost).addResultHandler(new ResultList) //.addResultHandler(mySql)
-        /*********/
-
-        val simpleAlgorithms: List[IntAlgorithm with Execution] = List(
-          new DsaA(0.95),
-          new DsaB(0.95))
-
-        val em = ExecutionMode.OptimizedAsynchronous //executionModes((Math.abs(execModePar % executionModes.size)))
-        val myAlgorithm = simpleAlgorithms((Math.abs(algorithmNumber % simpleAlgorithms.size)))
-        val myGraph = new RandomGraphReader(myAlgorithm, 1000, 3, 5, 0)
-        val myAggregationInterval = 0//100//if (aggregation) { if (em == ExecutionMode.Synchronous) 1 else 100 } else 0
-        val myFullHistory = true
-
-        evaluation = evaluation.addEvaluationRun(myAlgorithm.DcopAlgorithmRun(
-          graphInstantiator = myGraph,
-          maxUtility = myGraph.maxUtility,
-          domainSize = 5,
-          executionConfig = ExecutionConfiguration.withExecutionMode(em).withTimeLimit(5000), //1000000),
-          runNumber = runId,
-          aggregationInterval = myAggregationInterval,
-          fullHistoryStats = myFullHistory,
-          revision = "-1",
-          evaluationDescription = evalName).runAlgorithm)
-
-        evaluation.execute
-
-        println("The results")
-        assert(results.size == 1, "more results")
-        for (res <- results) {
-          val terminationReason = res.getOrElse("terminationReason", "NotDetected")
-          val isNe = res.getOrElse("isNe", "NotDetected")
-          println(terminationReason+" Ne:"+isNe)
-          assert(Boolean.equiv(isNe == "true" , terminationReason == "Converged"), s"Termination reason $terminationReason, NE $isNe in run $runId for: $em ${myAlgorithm.toString}, GRAPH($myGraph), aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          assert(!(isNe != "true" && terminationReason == "Converged"), s"Computation did converge but not in NE in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-          //assert(terminationReason == "Converged", s"Computation did not converge in run $runId for: $em ${myAlgorithm.toString}, $myGraph, aggregation interval = $myAggregationInterval, fullHistory = $myFullHistory.")
-        }
-
-        true
-      },
-      minSuccessful(1000))
   }
 
 }

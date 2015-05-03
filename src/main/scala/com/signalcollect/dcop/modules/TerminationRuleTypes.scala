@@ -26,9 +26,9 @@ package com.signalcollect.dcop.modules
  */
 
 trait TerminationRule extends Algorithm {
-  
+
   def shouldTerminate(c: State): Boolean
-  
+
 }
 
 trait NashEquilibriumConvergence extends TerminationRule {
@@ -37,12 +37,29 @@ trait NashEquilibriumConvergence extends TerminationRule {
 
 }
 
+trait SimulatedAnnealingConvergence extends TerminationRule with StateWithMemory {
 
-trait SimulatedAnnealingConvergence extends TerminationRule {
+  def negDeltaMax: Double
+  def etaInverse(i: Long): Double
 
-  def deltaComp: Double
-  def iteration: Int
-  
-  def shouldTerminate(c: State): Boolean = isInLocalOptimum(c) && (scala.math.exp(deltaComp * iteration * iteration) < 0.01)
+  def shouldTerminate(c: State): Boolean = {
+    val shouldTerminateVal = isInLocalOptimum(c) && (scala.math.exp(negDeltaMax * etaInverse(c.numberOfCollects)) < 0.001)
+    //    println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+    shouldTerminateVal
+  }
+
+}
+
+trait DistributionConvergence extends TerminationRule with ExtendedMemoryState {
+
+  def shouldTerminate(c: State): Boolean = {
+
+    val shouldTerminateVal = /*isInLocalOptimum(c) &&*/ c.memoryConverged
+    
+//      println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + isInLocalOptimum(c))
+//    if (shouldTerminateVal == false)
+//      println("Iteration in shouldTerminate:" + c.agentId + "-" + shouldTerminateVal + "-" + c.memory)
+    shouldTerminateVal
+  }
 
 }

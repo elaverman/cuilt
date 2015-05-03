@@ -22,7 +22,7 @@ package com.signalcollect.dcop.modules
 
 /**
  * State implementations.
- * 
+ *
  * A state module extends Algorithm and it provides a method to create an initial state and a state implementation.
  */
 
@@ -134,6 +134,185 @@ trait SimpleMemoryState extends StateWithMemory {
     }
     def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
       this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
+    }
+
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+    }
+  }
+}
+
+trait SimpleNumberOfCollectsState extends StateWithMemory {
+  type State = SimpleNumberOfCollectsStateImplementation
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleNumberOfCollectsStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[Action, Double].withDefaultValue(0.0),
+      numberOfCollects = 0)
+  }
+
+  case class SimpleNumberOfCollectsStateImplementation(
+    agentId: AgentId,
+    centralVariableValue: Action,
+    domain: Set[Action],
+    neighborActions: Map[AgentId, Action],
+    memory: Map[Action, UtilityType],
+    numberOfCollects: Long //TODO: rename to numberOfUpdates and check
+    ) extends StateWithMemoryInterface {
+
+    def withCentralVariableAssignment(value: Action) = {
+      this.copy(centralVariableValue = value).asInstanceOf[this.type]
+    }
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
+      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
+    }
+    def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
+      this.copy(numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
+    }
+
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+    }
+  }
+}
+
+trait ExtendedMemoryState extends StateWithMemory {
+  type State = ExtendedMemoryStateImplementation
+
+  def computeExpectedUtilities(c: State): Map[Action, UtilityType]
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+
+    //    this match {
+    //      case a: AverageRegretsTargetFunction => {
+    //        println("Regrets!")
+    //      }
+    //      case other => {
+    //        println("No regrets!")
+    //      }
+    //    }
+
+    ExtendedMemoryStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[Action, Double].withDefaultValue(0.0),
+      numberOfCollects = 0,
+      memoryConverged = false)
+  }
+
+  case class ExtendedMemoryStateImplementation(
+    agentId: AgentId,
+    centralVariableValue: Action,
+    domain: Set[Action],
+    neighborActions: Map[AgentId, Action],
+    memory: Map[Action, UtilityType],
+    numberOfCollects: Long, //TODO: rename to numberOfUpdates and check
+    memoryConverged: Boolean) extends StateWithMemoryInterface {
+
+    def withCentralVariableAssignment(value: Action) = {
+      this.copy(centralVariableValue = value).asInstanceOf[this.type]
+    }
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
+      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
+    }
+
+    def areMemoriesSimilar(mem1: Map[Action, UtilityType], mem2: Map[Action, UtilityType]): Boolean = {
+      if (mem1.keySet != mem2.keySet) {
+        false
+      } else {
+        var results = true
+        val tf1 = computeExpectedUtilities(this.copy(memory = mem1))
+        val tf2 = computeExpectedUtilities(this.copy(memory = mem2))
+        for (key <- mem1.keySet) {
+
+          val res = (tf1.get(key), tf2.get(key)) match {
+            case (Some(val1), Some(val2)) => {
+
+              //              this match {
+              //                case a: AverageRegretsTargetFunction => {
+              ////                  println("Regrets!")
+              //                  math.abs(math.max(0, val1) - math.max(0, val2)) < 0.000001
+              //                }
+              //                case b: DiscountedAverageRegretsTargetFunction => {
+              ////                  println("Regrets!")
+              //                  math.abs(math.max(0, val1) - math.max(0, val2)) < 0.000001
+              //                }
+              //                case other => {
+              ////                  println("No regrets!")
+              // assert(val1 >= 0 && val2 >= 0, "have to be positive regrets")
+              math.abs(val1 - val2) < 0.001
+              //                }
+              //              }
+
+            }
+            case _ => false
+          }
+          results = results && res
+        }
+        results
+      }
+    }
+
+    def withUpdatedMemory(newMemory: Map[Action, UtilityType]) = {
+      this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1, memoryConverged = areMemoriesSimilar(this.memory, newMemory)).asInstanceOf[this.type]
+    }
+
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects, memoryConverged $memoryConverged"
+    }
+  }
+}
+
+trait StateWithNeighborMemory extends StateModule {
+  type State <: StateWithNeighborMemoryInterface
+
+  trait StateWithNeighborMemoryInterface extends StateInterface {
+    def memory: Map[AgentId, Map[Action, Double]] //for each neighbor we keep their actions and "how much" they used that action
+    def numberOfCollects: Long //to rename to numberOfUpdates and check
+    def withUpdatedMemory(newMemory: Map[AgentId, Map[Action, Double]]): this.type
+  }
+}
+
+trait SimpleNeighborMemoryState extends StateWithNeighborMemory {
+  type State = SimpleNeighborMemoryStateImplementation
+
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+    SimpleNeighborMemoryStateImplementation(
+      agentId = id,
+      centralVariableValue = action,
+      domain = domain,
+      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
+      memory = Map.empty[AgentId, Map[Action, Double]].withDefaultValue(Map.empty[Action, Double]),
+      numberOfCollects = 0)
+  }
+
+  case class SimpleNeighborMemoryStateImplementation(
+    agentId: AgentId,
+    centralVariableValue: Action,
+    domain: Set[Action],
+    neighborActions: Map[AgentId, Action],
+    memory: Map[AgentId, Map[Action, Double]],
+    numberOfCollects: Long //TODO: rename to numberOfUpdates and check
+    ) extends StateWithNeighborMemoryInterface {
+
+    def withCentralVariableAssignment(value: Action) = {
+      this.copy(centralVariableValue = value).asInstanceOf[this.type]
+    }
+    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
+      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
+    }
+    def withUpdatedMemory(newMemory: Map[AgentId, Map[Action, Double]]) = {
+      this.copy(memory = newMemory, numberOfCollects = this.numberOfCollects + 1).asInstanceOf[this.type]
+    }
+
+    override def toString = {
+      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
     }
   }
 }

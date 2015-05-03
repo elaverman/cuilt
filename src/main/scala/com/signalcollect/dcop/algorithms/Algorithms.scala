@@ -52,17 +52,18 @@ class DsaB(changeProbabilityParam: Double) extends IntAlgorithm
 }
 
 class Dsan(changeProbabilityParam: Double, constant: Double, kval: Double) extends IntAlgorithm
-  with SimpleState
+  with SimpleNumberOfCollectsState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
   with SimulatedAnnealingDecisionRule
   with SimulatedAnnealingConvergence
-  with MemoryLessTargetFunction
+  with NumberOfCollectsTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {
   def changeProbability = changeProbabilityParam
   def const = constant
   def k = kval
+  def negDeltaMax = -0.01
   def algorithmName = "Dsan" + changeProbabilityParam + "const" + constant + "k" + kval
 }
 
@@ -79,12 +80,40 @@ class Jsfpi(changeProbabilityParam: Double) extends IntAlgorithm
   def algorithmName = "Jsfpi" + changeProbabilityParam
 }
 
-class Wrmi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgorithm
+
+class FmJsfpi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgorithm
   with SimpleMemoryState
   with VertexColoringUtility
   with ParallelRandomAdjustmentSchedule
-  with LinearProbabilisticDecisionRule
+  with ArgmaxADecisionRule
   with NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
+  with WeightedExpectedUtilityTargetFunction
+  with SignalCollectAlgorithmBridge
+  with Execution {
+  def changeProbability = changeProbabilityParam
+  def rho = rhoParam
+  def algorithmName = "FmJsfpi" + changeProbabilityParam+ "rhoValue" + rho
+}
+
+class Rm(changeProbabilityParam: Double) extends IntAlgorithm
+  with ExtendedMemoryState
+  with VertexColoringUtility
+  with ParallelRandomAdjustmentSchedule
+  with LinearProbabilisticDecisionRule
+  with DistributionConvergence//NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
+  with AverageRegretsTargetFunction
+  with SignalCollectAlgorithmBridge
+  with Execution {
+  def changeProbability = changeProbabilityParam
+  def algorithmName = "Rm" + changeProbabilityParam
+}
+
+class Wrmi(changeProbabilityParam: Double, rhoParam: Double) extends IntAlgorithm
+  with ExtendedMemoryState
+  with VertexColoringUtility
+  with ParallelRandomAdjustmentSchedule
+  with LinearProbabilisticDecisionRule
+  with DistributionConvergence//NashEquilibriumConvergence //TODO: Check if it converges in beliefs, as it should.
   with DiscountedAverageRegretsTargetFunction
   with SignalCollectAlgorithmBridge
   with Execution {
