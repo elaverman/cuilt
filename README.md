@@ -1,4 +1,4 @@
-test-dcop-algorithms
+Cuilt
 ===============
 
 Framework for Local Algorithms used in Distributed Constraint Optimization Problems.
