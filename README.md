@@ -1,7 +1,7 @@
-Cuilt
+<img src="./Cuilt.jpg" alt="Cuilt logo" width ="120"> 
 ===============
 
-Framework for Local Algorithms used in Distributed Constraint Optimization Problems.
+A Framework for Local Algorithms used in Distributed Constraint Optimization Problems.
 
 
 About
