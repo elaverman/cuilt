@@ -64,12 +64,11 @@ object GraphGeneratorRunner extends App {
   def evalNumber = 21
   def runs = 1
   def pure = true
-  //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = kraken)
-  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
-//    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
+//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
   /*********/
 
-  val numbersOfVertices = Set(10)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
+  val numbersOfVertices = Set(40)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
   val edgeDensities = Set(3)
   val numbersOfColors = Set(3)
   val numberOfGraphs = 10

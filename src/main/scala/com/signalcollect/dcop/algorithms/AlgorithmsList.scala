@@ -33,6 +33,9 @@ import com.signalcollect._
 import com.signalcollect.configuration.ExecutionMode
 
 object MixedAlgorithmList {
+  val testAlgoSync = List(new MemoryLessTargetFunction_ArgmaxADecisionRule_ParallelRandomAdjustmentSchedule(0.5))
+  val testAlgoAsync = List(new MemoryLessTargetFunction_ArgmaxADecisionRule_ParallelRandomAdjustmentSchedule(0.9))
+  
     val algorithmsSync = List(
             new MemoryLessTargetFunction_ArgmaxADecisionRule_ParallelRandomAdjustmentSchedule(parchangeProbability = 0.2), 
             new MemoryLessTargetFunction_ArgmaxADecisionRule_ParallelRandomAdjustmentSchedule(parchangeProbability = 0.4), 

@@ -51,9 +51,11 @@ object DcopEvaluation extends App {
     jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
     coresPerNode = 10,
     partition = "minion_superfast",
+    excludeNodes = "minion[01-14]",
+    copyExecutable = false,
     localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
-  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "evaluationCP", "bigGraph")
+  val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "distributedEval", "bigGraph")
   val mySql = new MySqlResultHandler(args(2), args(3), args(4))
 
   def getRevision: String = {
@@ -74,24 +76,25 @@ object DcopEvaluation extends App {
   val debug = false
 
   /*********/
-  def evalName = s"40 all"
-  def evalNumber = 38
-  def runs = 5
+  def evalName = s"test distribute"
+  def evalNumber = 41
+  def runs = 1 //5
   def pure = true
+  def evalNumberOfNodes = 2
 
-  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru).addResultHandler(mySql) //.addResultHandler(googleDocs)
-  //        var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost).addResultHandler(mySql) //.addResultHandler(googleDocs)
+    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru, numberOfNodes = evalNumberOfNodes).addResultHandler(googleDocs)//(mySql) //.addResultHandler(googleDocs)
+//  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost, numberOfNodes = 1).addResultHandler(mySql) //.addResultHandler(googleDocs)
   /*********/
 
   var graphs: List[String] = List()
 
   val numbersOfVertices = Set(40) //10, 100, 1000, 10000, 100000, 1000000)
   val edgeDensities = Set(3)
-  val numbersOfColors = Set(5, 4, 3)
-  val numberOfGraphs = 5
+  val numbersOfColors = Set(3) //, 4, 3)
+  val numberOfGraphs = 1 //5
 
-  val simpleOptimizersSync: List[IntAlgorithm with Execution] = MixedAlgorithmList.algorithmsSync
-  val simpleOptimizersAsync: List[IntAlgorithm with Execution] = MixedAlgorithmList.algorithmsAsync
+  val simpleOptimizersSync: List[IntAlgorithm with Execution] = MixedAlgorithmList.testAlgoSync //algorithmsSync
+  val simpleOptimizersAsync: List[IntAlgorithm with Execution] = MixedAlgorithmList.testAlgoAsync //algorithmsAsync
 
   for (numberOfVertices <- numbersOfVertices) {
     for (repetitions <- (1 to runs)) {
@@ -114,6 +117,7 @@ object DcopEvaluation extends App {
                   runNumber = repetitions,
                   aggregationInterval = 0, //if (em == ExecutionMode.Synchronous) 1 else 100, //every step or every 100 ms
                   fullHistoryStats = false,
+                  resultsWithComma = true,
                   revision = getRevision,
                   evaluationDescription = evalName).runAlgorithm)
               }

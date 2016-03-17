@@ -30,10 +30,11 @@ case class Evaluation(
   executionHost: ExecutionHost = new LocalHost,
   evaluationRuns: List[() => List[Map[String, String]]] = List(),
   resultHandlers: List[Map[String, String] => Unit] = List(println(_)),
+  numberOfNodes: Int = 1,
   extraStats: Map[String, String] = Map()) {
-  def addEvaluationRun(evaluationRun: () => List[Map[String, String]]) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRun :: evaluationRuns, resultHandlers, extraStats)
-  def addResultHandler(resultHandler: Map[String, String] => Unit) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRuns, resultHandler :: resultHandlers, extraStats)
-  def addExtraStats(stats: Map[String, String]) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRuns, resultHandlers, extraStats ++ stats)
+  def addEvaluationRun(evaluationRun: () => List[Map[String, String]]) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRun :: evaluationRuns, resultHandlers, numberOfNodes, extraStats)
+  def addResultHandler(resultHandler: Map[String, String] => Unit) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRuns, resultHandler :: resultHandlers, numberOfNodes, extraStats)
+  def addExtraStats(stats: Map[String, String]) = Evaluation(evaluationName, evaluationNumber, executionHost, evaluationRuns, resultHandlers, numberOfNodes, extraStats ++ stats)
   def execute {
 
     val jobs = (evaluationRuns zip (1 to evaluationRuns.size)) map { runTuple =>
@@ -59,7 +60,7 @@ case class Evaluation(
       //        }
       //        println("Done.")
       //      }
-      Job(jobFunction, jobId.toString)
+      Job(jobFunction, jobId.toString, numberOfNodes)
     }
     executionHost.executeJobs(jobs)
   }

@@ -290,7 +290,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
     runNumber: Int,
     aggregationInterval: Int,
     fullHistoryStats: Boolean,
-    resultsWithComma: Boolean = true,
+    resultsWithComma: Boolean = false,
     revision: String,
     evaluationDescription: String) {
 
@@ -422,7 +422,7 @@ trait Execution extends SignalCollectAlgorithmBridge {
 
       println("Shutting down.")
       evaluationGraph.shutdown
-
+      println("Shut down.")
       runResult :: finalResults
 
     }

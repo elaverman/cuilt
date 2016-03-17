@@ -27,6 +27,7 @@ import com.signalcollect.nodeprovisioning.slurm._
 import java.net.InetAddress
 
 
+//TODO include table name as param
 class AllResults(tag: Tag) extends Table[RowType](tag, "evalCP") {
   // def result_id = column[Int]("result_id", O.PrimaryKey, O.AutoInc, O.NotNull) // INT NOT NULL AUTO_INCREMENT,
   def evaluationDescription = column[String]("evaluationDescription")
@@ -106,10 +107,10 @@ class MySqlResultHandler(username: String, password: String, ipAddress: String)
       dataGraphStructure, dataJobId, dataComputationTimeInMilliseconds,
       dataDate, dataTerminationReason)
 
-    //    val address = InetAddress.getByName(ipAddress)
-    //    val realIp = address.getHostAddress
-    //    
-    //    println(s"Ip address for $ipAddress is $realIp")
+//        val address = InetAddress.getByName(ipAddress)
+//        val realIp = address.getHostAddress
+//        
+//        println(s"Ip address for $ipAddress is $realIp")
 
     Database.forURL(s"jdbc:mysql://$ipAddress/optimizers_db", user = username, password = password, driver = "com.mysql.jdbc.Driver") withSession {
       implicit session =>
