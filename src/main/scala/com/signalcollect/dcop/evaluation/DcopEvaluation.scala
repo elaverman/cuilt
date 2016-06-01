@@ -50,10 +50,12 @@ object DcopEvaluation extends App {
   val gru = new SlurmHost(
     jobSubmitter = new SlurmJobSubmitter(username = System.getProperty("user.name"), hostname = "gru.ifi.uzh.ch"),
     coresPerNode = 10,
+    localJarPath = assemblyPath, 
+    jvmParameters = jvmParameters, 
     partition = "minion_superfast",
     excludeNodes = "minion[01-14]",
     copyExecutable = false,
-    localJarPath = assemblyPath, jvmParameters = jvmParameters, jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
+    jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
   val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "distributedEval", "bigGraph")
   val mySql = new MySqlResultHandler(args(2), args(3), args(4))
