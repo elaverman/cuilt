@@ -19,7 +19,7 @@
 package com.signalcollect.dcop.custom
 
 import com.signalcollect.dcop.modules.StateModule
-import com.signalcollect.dcop.modules.IntAlgorithm
+import com.signalcollect.dcop.modules.Algorithm
 
 /**
  * State definitions for Event agent.
@@ -31,7 +31,8 @@ trait StateWithParticipants extends StateModule {
   type State <: StateWithParticipantsInterface
 
   trait StateWithParticipantsInterface extends StateInterface {
-    def participants: Set[Long]
+    // Number of participants in common with another event. 
+    def commonParticipants: Map[Long, (Long,Long)]
   }
 }
 
@@ -39,13 +40,13 @@ trait EventState extends StateWithParticipants {
   
   type State = EventStateImplementation
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action], participants: Set[Long]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], commonParticipants: Map[Long, (Long,Long)]): State = {
     EventStateImplementation(
       agentId = id,
       centralVariableValue = action,
       domain = domain,
       neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
-      participants = participants)
+      commonParticipants = commonParticipants)
   }
 
   case class EventStateImplementation(
@@ -53,7 +54,7 @@ trait EventState extends StateWithParticipants {
     centralVariableValue: Action,
     domain: Set[Action],
     neighborActions: Map[AgentId, Action],
-    participants: Set[Long]) extends StateWithParticipantsInterface {
+    commonParticipants: Map[Long, (Long,Long)]) extends StateWithParticipantsInterface {
 
     def withCentralVariableAssignment(value: Action) = {
       this.copy(centralVariableValue = value).asInstanceOf[this.type]
