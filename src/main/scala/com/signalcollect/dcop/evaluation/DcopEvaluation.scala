@@ -54,7 +54,7 @@ object DcopEvaluation extends App {
     jvmParameters = jvmParameters, 
     partition = "minion_superfast",
     excludeNodes = "minion[01-14]",
-    copyExecutable = false,
+    copyExecutable = true,
     jdkBinPath = "/home/user/verman/jdk1.7.0_45/bin/")
   val localHost = new LocalHost
   val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "distributedEval", "bigGraph")

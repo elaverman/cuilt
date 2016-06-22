@@ -40,26 +40,16 @@ case class Evaluation(
     val jobs = (evaluationRuns zip (1 to evaluationRuns.size)) map { runTuple =>
       val evaluationRun = runTuple._1
       val jobNumber = runTuple._2
-      val jobId = jobNumber * 100 + evaluationNumber % 100
+      val jobId = jobNumber +"-"+ evaluationNumber
       val jobFunction = () => {
         println(s"Job $jobId is being executed ...")
         val stats = evaluationRun() // Execute evaluation.
         for (stat <- stats) {
-          resultHandlers foreach (handler => handler(stat ++ extraStats ++ Map("jobId" -> jobId.toString)))
+          resultHandlers foreach (handler => handler(stat ++ extraStats ++ Map("jobId" -> jobId)))
         }
         println("Done.")
       }
 
-      //    val jobs = evaluationRuns map { evaluationRun =>
-      //      val jobId = Random.nextInt.abs % 10000000
-      //      val jobFunction = () => {
-      //        println(s"Job $jobId is being executed ...")
-      //        val stats = evaluationRun() // Execute evaluation.
-      //        for (stat <- stats) {
-      //          resultHandlers foreach (handler => handler(stat ++ extraStats ++ Map("jobId" -> jobId.toString)))
-      //        }
-      //        println("Done.")
-      //      }
       Job(jobFunction, jobId.toString, numberOfNodes)
     }
     executionHost.executeJobs(jobs)
