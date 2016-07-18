@@ -29,8 +29,8 @@ import com.signalcollect.Vertex
 
 trait SignalCollectAlgorithmBridge extends Algorithm {
 
-  def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] = {
-    new DcopVertex(id, createInitialState(id, initialAction, domain), false)
+  def createVertex(id: AgentId, initialAction: Action, domain: Set[Action], extraInfo: Option[Any] = None): Vertex[AgentId, State, Any, Any] = {
+    new DcopVertex(id, createInitialState(id, initialAction, domain, extraInfo), false)
   }
 
   def createEdge(targetId: AgentId) = {

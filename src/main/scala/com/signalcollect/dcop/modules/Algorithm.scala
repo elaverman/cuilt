@@ -55,12 +55,12 @@ trait Algorithm extends Serializable {
 
   def algorithmName: String
   
-  def createVertex(id: AgentId, initialAction: Action, domain: Set[Action]): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
+  def createVertex(id: AgentId, initialAction: Action, domain: Set[Action], extraInfo: Option[Any] = None): Vertex[AgentId, State, Any, Any] // SignalCollectAlgorithmBridge or similar
 
   def createEdge(targetId: AgentId): Edge[AgentId] 
   //TODO: Shouldn't we also require createEdge from the bridge?
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State //state
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State //state
 
   def shouldConsiderMove(c: State): Boolean //adjustment schedule
 

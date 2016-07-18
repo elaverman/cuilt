@@ -24,13 +24,27 @@ package com.signalcollect.dcop.modules
  * State implementations.
  *
  * A state module extends Algorithm and it provides a method to create an initial state and a state implementation.
+ * 
+ * I[1] StateModule (Main StateInterface)
+ *    C[2] SimpleState (Case Class) extends [1]
+ *    I[3] StateWithMemory (Interface) extends [1]
+ *        C[4] SimpleMemoryState (Case Class) extends [3]
+ *        C[5] SimpleNumberOfCollectsState (Case Class) extends [3]
+ *        C[6] ExtendedMemoryState (Case Class) extends [3]
+ *    I[7] StateWithNeighborMemory (Interface) extends [1]
+ *        C[8] SimpleNeighborMemoryState (Case Class) extends [7]
+ *    I[9] StateWithRank (Interface) extends [1]
+ *        C[10] RankedState (Case Class) extends [9]
+ *        C[11] RankedMemoryState (Case Class) extends [3 and 7]
  */
 
 trait StateModule extends Algorithm {
   type State <: StateInterface
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State
+  // Called by createVertex() on SignalCollectAlgorithmBridge with default value None for extraInfo.
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State
 
+  // TODO: Add extraInfo here or on the extending traits to support more general states.
   trait StateInterface extends StateType {
     def agentId: AgentId
     def centralVariableValue: Action
@@ -71,7 +85,7 @@ trait StateModule extends Algorithm {
 trait SimpleState extends StateModule {
   type State = SimpleStateImplementation
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
     SimpleStateImplementation(
       agentId = id,
       centralVariableValue = action,
@@ -107,7 +121,7 @@ trait StateWithMemory extends StateModule {
 trait SimpleMemoryState extends StateWithMemory {
   type State = SimpleMemoryStateImplementation
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
     SimpleMemoryStateImplementation(
       agentId = id,
       centralVariableValue = action,
@@ -145,7 +159,7 @@ trait SimpleMemoryState extends StateWithMemory {
 trait SimpleNumberOfCollectsState extends StateWithMemory {
   type State = SimpleNumberOfCollectsStateImplementation
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
     SimpleNumberOfCollectsStateImplementation(
       agentId = id,
       centralVariableValue = action,
@@ -185,7 +199,7 @@ trait ExtendedMemoryState extends StateWithMemory {
 
   def computeExpectedUtilities(c: State): Map[Action, UtilityType]
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
 
     //    this match {
     //      case a: AverageRegretsTargetFunction => {
@@ -282,7 +296,7 @@ trait StateWithNeighborMemory extends StateModule {
 trait SimpleNeighborMemoryState extends StateWithNeighborMemory {
   type State = SimpleNeighborMemoryStateImplementation
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
     SimpleNeighborMemoryStateImplementation(
       agentId = id,
       centralVariableValue = action,
@@ -361,7 +375,7 @@ trait RankedState extends StateWithRank {
   type State = RankedStateImplementation
   type NeighborMetadata = Double
 
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action]): State = {
+  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
     RankedStateImplementation(
       agentId = id,
       centralVariableValue = action,
