@@ -20,3 +20,7 @@ inputs/*
 diagrams/dcop-algorithms-diagram.graffle
 
 inputGraphs/*
+
+*.snapshot
+
+*.hprof
