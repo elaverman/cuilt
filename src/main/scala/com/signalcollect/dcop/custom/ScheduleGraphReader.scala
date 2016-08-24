@@ -56,42 +56,39 @@ class ScheduleGraphReader(
     val allSlotsList = allSlots.toList
     val allEventsList = allEvents.toList
 
-    // TODO: Repair domain to reflect actual edges.
-    for (eventId <- allEvents) {
-      if (eventsToRooms.contains(eventId)) {
+    for (eventId <- 1 to eventsNumber) {
+      if (!eventsToRooms(eventId).isEmpty) {
         val domain = (for { ts <- (1 to timeSlots); r <- eventsToRooms(eventId) }
           yield getSlotId(r, ts)).toSet
-        g.addVertex(eventAlgo.createVertex(eventId, getRandomFromDomain(domain), domain, Some(commonPeople(eventId / 2))))
+        g.addVertex(eventAlgo.createVertex(eventId * 2, getRandomFromDomain(domain), domain, Some(commonPeople(eventId))))
       } else {
-        g.addVertex(eventAlgo.createVertex(eventId, 0, Set(0), Some(commonPeople(eventId / 2))))
+        g.addVertex(eventAlgo.createVertex(eventId * 2, 0, Set(0), Some(commonPeople(eventId))))
       }
     }
     for (slotId <- allSlots) {
       // Slots can also be non-allocated, so the domain includes 0.
-      g.addVertex(slotAlgo.createVertex(slotId, 0, roomsToEvents(getRoomId(slotId)) + 0))
+      g.addVertex(slotAlgo.createVertex(slotId, 0, roomsToEvents(getRoomId(slotId)).map(_ * 2) + 0))
     }
 
     //Add edges
-    for (eventId <- allEvents) {
+    for (eventId <- 1 to eventsNumber) {
       //event to event
-      for ((ev2, (s, p)) <- commonPeople(eventId / 2)) {
-        g.addEdge(eventId, eventAlgo.createEdge(targetId = ev2.toInt))
+      for ((ev2, (s, p)) <- commonPeople(eventId)) {
+        g.addEdge(eventId * 2, eventAlgo.createEdge(targetId = ev2))
         util += s + p
       }
-      val thisLectureSize = lectureSize(eventId / 2)
+      val thisLectureSize = lectureSize(eventId)
 
       //event to slot and slot to event
-      //Only if there are outgoing edges. That might not be the case, e.g. classes with 0 students.
-      if (eventsToRooms.contains(eventId)) {
-        for (roomId <- eventsToRooms(eventId)) {
-          val thisRoomSize = roomSize(roomId)
-          if ((thisLectureSize > thisRoomSize * minOccupationRate)
-            && (thisLectureSize <= thisRoomSize)) {
-            for (ts <- (1 to timeSlots)) {
-              val slotId = getSlotId(roomId, ts)
-              g.addEdge(eventId, eventAlgo.createEdge(targetId = slotId))
-              g.addEdge(slotId, slotAlgo.createEdge(targetId = eventId))
-            }
+      // It might be the case that there are no outgoing edges, e.g. classes with 0 students.
+      for (roomId <- eventsToRooms(eventId)) {
+        val thisRoomSize = roomSize(roomId)
+        if ((thisLectureSize > thisRoomSize * minOccupationRate)
+          && (thisLectureSize <= thisRoomSize)) {
+          for (ts <- (1 to timeSlots)) {
+            val slotId = getSlotId(roomId, ts)
+            g.addEdge(eventId * 2, eventAlgo.createEdge(targetId = slotId))
+            g.addEdge(slotId, slotAlgo.createEdge(targetId = eventId * 2))
           }
         }
       }
@@ -114,8 +111,8 @@ class ScheduleGraphReader(
 
     var commonPeople = new Array[scala.collection.mutable.Map[Int, (Int, Int)]](eventsNumber + 1)
 
-    for (eventId <- allEvents) {
-      commonPeople(eventId / 2) = scala.collection.mutable.Map.empty[Int, (Int, Int)]
+    for (eventId <- (1 to eventsNumber)) {
+      commonPeople(eventId) = scala.collection.mutable.Map.empty[Int, (Int, Int)]
     }
     for (line <- bufferedSource.getLines) {
       val Array(ev1, ev2, stud, prof) = line.split(",").map(_.trim).map(_.toInt)
@@ -133,22 +130,20 @@ class ScheduleGraphReader(
     allEvents: List[Int],
     allSlots: List[Int],
     roomSize: Array[Int],
-    lectureSize: Array[Int]): (scala.collection.mutable.Map[Int, Set[Int]], scala.collection.mutable.Map[Int, Set[Int]]) = {
+    lectureSize: Array[Int]): (Array[Set[Int]], Array[Set[Int]]) = {
 
-    var eventToRoomEdges = scala.collection.mutable.Map.empty[Int, Set[Int]]
-    var roomToEventEdges = scala.collection.mutable.Map.empty[Int, Set[Int]]
+    val eventToRoomEdges = Array.fill[Set[Int]](eventsNumber + 1)(Set.empty[Int])
+    val roomToEventEdges = Array.fill[Set[Int]](rooms + 1)(Set.empty[Int])
 
-    for (eventId <- allEvents) {
+    for (eventId <- 1 to eventsNumber) {
       for (roomId <- 1 to rooms) {
         val thisRoomSize = roomSize(roomId)
-        val thisLectureSize = lectureSize(eventId / 2)
+        val thisLectureSize = lectureSize(eventId)
 
         if ((thisLectureSize > thisRoomSize * minOccupationRate)
           && (thisLectureSize <= thisRoomSize)) {
-          val oldEventToSlot = eventToRoomEdges.getOrElse(eventId, Set.empty[Int])
-          eventToRoomEdges += ((eventId, oldEventToSlot + roomId))
-          val oldSlotToEvent = roomToEventEdges.getOrElse(roomId, Set.empty[Int])
-          roomToEventEdges += ((roomId, oldSlotToEvent + eventId))
+          eventToRoomEdges(eventId) = eventToRoomEdges(eventId) + roomId
+          roomToEventEdges(roomId) = roomToEventEdges(roomId) + eventId
         }
       }
     }
