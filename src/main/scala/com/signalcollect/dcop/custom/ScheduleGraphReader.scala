@@ -1,7 +1,7 @@
 /*
  *  @author Mihaela Verman
  *  
- *  Copyright 2015 University of Zurich
+ *  Copyright 2016 University of Zurich
  *      
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ class ScheduleGraphReader(
       yield (e * 2)).toList
 
     val commonPeople = computeCommonPeopleForEvents(allEvents)
+    // Changed from *2 id to actual id.
     val lectureSize = computeLectureSize()
     val roomSize = computeRoomSize()
     val (eventsToRooms, roomsToEvents) = computeEdges(allEvents, allSlots, roomSize, lectureSize)
@@ -57,7 +58,6 @@ class ScheduleGraphReader(
 
     // TODO: Repair domain to reflect actual edges.
     for (eventId <- allEvents) {
-      // TODO: Select at random the initial action.
       if (eventsToRooms.contains(eventId)) {
         val domain = (for { ts <- (1 to timeSlots); r <- eventsToRooms(eventId) }
           yield getSlotId(r, ts)).toSet
@@ -78,19 +78,13 @@ class ScheduleGraphReader(
         g.addEdge(eventId, eventAlgo.createEdge(targetId = ev2.toInt))
         util += s + p
       }
-      val thisLectureSize = lectureSize.get(eventId) match {
-        case Some(x) => x
-        case None => throw new Exception(s"Lecture Id $eventId was not found.")
-      }
+      val thisLectureSize = lectureSize(eventId / 2)
 
       //event to slot and slot to event
       //Only if there are outgoing edges. That might not be the case, e.g. classes with 0 students.
       if (eventsToRooms.contains(eventId)) {
         for (roomId <- eventsToRooms(eventId)) {
-          val thisRoomSize = roomSize.get(roomId) match {
-            case Some(x) => x
-            case None => throw new Exception(s"Room Id ${roomId} was not found.")
-          }
+          val thisRoomSize = roomSize(roomId)
           if ((thisLectureSize > thisRoomSize * minOccupationRate)
             && (thisLectureSize <= thisRoomSize)) {
             for (ts <- (1 to timeSlots)) {
@@ -138,22 +132,17 @@ class ScheduleGraphReader(
   def computeEdges(
     allEvents: List[Int],
     allSlots: List[Int],
-    roomSize: scala.collection.mutable.Map[Int, Int],
-    lectureSize: scala.collection.mutable.Map[Int, Int]): (scala.collection.mutable.Map[Int, Set[Int]], scala.collection.mutable.Map[Int, Set[Int]]) = {
+    roomSize: Array[Int],
+    lectureSize: Array[Int]): (scala.collection.mutable.Map[Int, Set[Int]], scala.collection.mutable.Map[Int, Set[Int]]) = {
 
     var eventToRoomEdges = scala.collection.mutable.Map.empty[Int, Set[Int]]
     var roomToEventEdges = scala.collection.mutable.Map.empty[Int, Set[Int]]
 
     for (eventId <- allEvents) {
       for (roomId <- 1 to rooms) {
-        val thisRoomSize = roomSize.get(roomId) match {
-          case Some(x) => x
-          case None => throw new Exception(s"Room Id ${roomId} was not found.")
-        }
-        val thisLectureSize = lectureSize.get(eventId) match {
-          case Some(x) => x
-          case None => throw new Exception(s"Lecture Id $eventId was not found.")
-        }
+        val thisRoomSize = roomSize(roomId)
+        val thisLectureSize = lectureSize(eventId / 2)
+
         if ((thisLectureSize > thisRoomSize * minOccupationRate)
           && (thisLectureSize <= thisRoomSize)) {
           val oldEventToSlot = eventToRoomEdges.getOrElse(eventId, Set.empty[Int])
@@ -170,14 +159,14 @@ class ScheduleGraphReader(
   /*
    * Returns the number of students for each event (lecture).
    */
-  def computeLectureSize(): scala.collection.mutable.Map[Int, Int] = {
+  def computeLectureSize(): Array[Int] = {
     val bufferedSource = io.Source.fromFile(lectureSizeFile)
 
-    var lectureSize = scala.collection.mutable.Map.empty[Int, Int]
+    val lectureSize = new Array[Int](eventsNumber + 1)
 
     for (line <- bufferedSource.getLines) {
       val Array(ev1, stud, prof) = line.split(",").map(_.trim).map(_.toInt)
-      lectureSize += ((ev1 * 2, stud))
+      lectureSize(ev1) = stud
     }
     bufferedSource.close
 
@@ -187,16 +176,16 @@ class ScheduleGraphReader(
   /*
    * Returns the capacity for each room.
    */
-  def computeRoomSize(): scala.collection.mutable.Map[Int, Int] = {
+  def computeRoomSize(): Array[Int] = {
     val bufferedSource = io.Source.fromFile(roomsFile)
 
-    var roomSize = scala.collection.mutable.Map.empty[Int, Int]
+    val roomSize = new Array[Int](rooms + 1)
 
     println("Room size")
 
     for (line <- bufferedSource.getLines) {
       val Array(room, size, roomType) = line.split(",").map(_.trim)
-      roomSize += ((room.toInt, size.toInt))
+      roomSize(room.toInt) = size.toInt
     }
     bufferedSource.close
 
