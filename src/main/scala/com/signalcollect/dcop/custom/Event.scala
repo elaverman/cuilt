@@ -88,6 +88,8 @@ trait EventUtility extends IntAlgorithm with StateWithParticipants {
 
     if ((slotOfEvent == slotId && eventId == eventOfSlot) || (slotOfEvent != slotId && eventId != eventOfSlot)) {
       1.0
+    } else if (slotOfEvent == slotId && eventOfSlot == 0) {
+      0.5
     } else {
       0.0
     }
@@ -100,7 +102,7 @@ trait EventUtility extends IntAlgorithm with StateWithParticipants {
       val professors = participants._1
       val students = participants._2
       // TODO: Change into hard constraint for professors.
-      - professors - students
+      -professors - students
     } else {
       0.0
     }

@@ -48,26 +48,52 @@ class SchedulingRunSpec extends FlatSpec with ShouldMatchers with Checkers with 
 
   println("Start")
   println("Start graph building")
-  val g = new ScheduleGraphReader(
-    eventAlgo = SchedulingEventAlgorithm,
-    slotAlgo = SchedulingSlotAlgorithm,
-    eventsNumber = 4,
-    timeSlots = 2,
-    rooms = 2,
-    commonPeopleFile = "inputGraphs/inputScheduling/test/test_llsp.csv",
-    lectureSizeFile = "inputGraphs/inputScheduling/test/test_lsp.csv",
-    roomsFile = "inputGraphs/inputScheduling/test/test_rc.csv").
-    build(GraphBuilder.withConsole(true))
 
-  g.foreachVertex(x => println(x))
-  println("Executing")
-  g.execute(ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous))//.Interactive))
+  val myEventAlgo = SchedulingEventAlgorithm
+  val mySlotAlgo = SchedulingSlotAlgorithm
 
-  g.foreachVertex(x => println(x))
+  "Vertex 4" should "be paired" in {
+    check((execModePar: Int) => {
+      var res = false
+      val g = new ScheduleGraphReader(
+        eventAlgo = myEventAlgo,
+        slotAlgo = mySlotAlgo,
+        eventsNumber = 4,
+        timeSlots = 2,
+        rooms = 2,
+        commonPeopleFile = "inputGraphs/inputScheduling/test/test_llsp.csv",
+        lectureSizeFile = "inputGraphs/inputScheduling/test/test_lsp.csv",
+        roomsFile = "inputGraphs/inputScheduling/test/test_rc.csv").
+        build(GraphBuilder.withConsole(true))
 
-  println("Shutting down")
-  g.shutdown
+      g.foreachVertex(x => println(x))
+      println("Executing")
+      g.execute(ExecutionConfiguration.withExecutionMode(ExecutionMode.Synchronous)) //.PureAsynchronous)) //.Interactive))
 
-  println("bye")
+      g.foreachVertex(x => println(x))
+
+      val stateVertex4 = g.forVertexWithId(4, f = { v: Vertex[_, _, _, _] => v.state })
+      val slotVertex4 = stateVertex4 match {
+        case event: myEventAlgo.State => event.centralVariableValue
+        case _ => throw new Exception("Vertex 4 is not an event!")
+      }
+
+      val slotVertex = g.forVertexWithId(slotVertex4, f = { v: Vertex[_, _, _, _] => v.state })
+      val eventOfSlotVertex = slotVertex match {
+        case slot: mySlotAlgo.State => slot.centralVariableValue
+        case _ => throw new Exception("Vertex " + slotVertex4 + " is not a slot!")
+      }
+
+      assert(eventOfSlotVertex == 4)
+      res = true
+      
+      println("Shutting down")
+      g.shutdown
+
+      println("bye")
+      res
+    },
+    minSuccessful(10))
+  }
 }
 
