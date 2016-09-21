@@ -28,7 +28,7 @@ import java.net.InetAddress
 
 
 //TODO include table name as param
-class AllResults(tag: Tag) extends Table[RowType](tag, "evalCP") {
+class AllResults(tag: Tag) extends Table[RowType](tag, "evalsept") {
   // def result_id = column[Int]("result_id", O.PrimaryKey, O.AutoInc, O.NotNull) // INT NOT NULL AUTO_INCREMENT,
   def evaluationDescription = column[String]("evaluationDescription")
   def optimizer = column[String]("optimizer")
