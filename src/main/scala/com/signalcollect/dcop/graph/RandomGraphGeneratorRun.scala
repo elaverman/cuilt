@@ -40,7 +40,7 @@ import scala.util.Random
 
 case class RandomGraphGeneratorRun(
   numberOfVertices: Int,
-  edgeDensity: Int,
+  edgeDensity: Double,
   numberOfColors: Int,
   fileName: String,
   adoptGraphFormat: Boolean,
@@ -186,7 +186,7 @@ case class RandomGraphGeneratorRun(
     targetFile.write(numberOfVertices + " " + myGraph.edgeCounter + " " + edgeDensity + " " + numberOfColors + "\n")
     for (i <- 0 until numberOfVertices) {
       for (j <- myGraph.e(i)) {
-        if (i < j) { //No self edges
+        if (i < j) { //No self edges, no double edges (will be added automatically by the reader).
           targetFile.write(i + " " + j + "\n")
         }
       }

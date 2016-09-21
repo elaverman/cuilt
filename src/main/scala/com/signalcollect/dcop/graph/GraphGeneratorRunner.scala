@@ -65,22 +65,32 @@ object GraphGeneratorRunner extends App {
   def runs = 1
   def pure = true
 //  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = gru)
-    var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
+  var evaluation = new Evaluation(evaluationName = evalName, evaluationNumber = evalNumber, executionHost = localHost)
   /*********/
 
-  val numbersOfVertices = Set(40)//, 100, 1000, 10000, 100000, 1000000)//, 10000000)
+  val numbersOfVertices = Set(40) //, 100, 1000, 10000, 100000, 1000000)//, 10000000)
   val edgeDensities = Set(3)
   val numbersOfColors = Set(3)
   val numberOfGraphs = 10
   val adoptGraphFormat = false
   val discardForInitialLonelyVertices = false
 
+  //Graphs
   for (i <- 0 until numberOfGraphs) {
     for (numberOfVertices <- numbersOfVertices) {
       for (edgeDensity <- edgeDensities) {
         for (numberOfColors <- numbersOfColors) {
           evaluation = evaluation.addEvaluationRun(RandomGraphGeneratorRun(numberOfVertices, edgeDensity, numberOfColors, s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_$i.txt", adoptGraphFormat, discardForInitialLonelyVertices).generate)
         }
+      }
+    }
+  }
+
+  //Grids
+  for (numberOfVertices <- numbersOfVertices) {
+    for (edgeDensity <- edgeDensities) {
+      for (numberOfColors <- numbersOfColors) {
+        evaluation = evaluation.addEvaluationRun(GridGeneratorRun((math.sqrt(numberOfVertices)).toInt, numberOfColors, s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_Grid.txt", adoptGraphFormat).generate)
       }
     }
   }
