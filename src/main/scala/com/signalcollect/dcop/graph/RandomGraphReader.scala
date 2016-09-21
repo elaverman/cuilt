@@ -29,7 +29,7 @@ import java.io.BufferedReader
 import java.io.FileReader
 
 //TODO: Decouple the functions for building vertices/edges from the algorithm. Add pluggable function for action initialization.
-class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity: Int, numberOfColors: Int, graphNumber: Int) extends GraphInstantiator {
+class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity: Double, numberOfColors: Int, graphNumber: Int) extends GraphInstantiator {
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {
 
