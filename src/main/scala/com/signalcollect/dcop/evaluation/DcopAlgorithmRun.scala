@@ -29,12 +29,20 @@ import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.interfaces.ModularAggregationOperation
 import scala.util.Random
 
+/*
+ * Contains stats gatherers and the DcopAlgorithmRun.
+ * 
+ * The DcopAlgorithmRun.runAlgorithm() builds the graph with the graphInstantiator,
+ * executes it using the executionConfig, and returns the results from 
+ * the execution and the stats. It is called from DcopEvaluation, passed as a 
+ * parameter to Evaluation.addEvaluationRun()
+ */
 trait Execution extends SignalCollectAlgorithmBridge {
 
   def logger = false
   def isGrid = true
 
-  /*
+ /*
  * Returns true iff for each vertex, there is no state with better expected utility than the current one.
  * The values for the target function are computed with the potentially new action but the actions of the neighbours
  * received from the previous step.
