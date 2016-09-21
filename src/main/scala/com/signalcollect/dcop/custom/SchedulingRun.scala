@@ -43,9 +43,9 @@ object SchedulingRun extends App {
     eventsNumber = 4587, 
     timeSlots = 25, 
     rooms = 153, 
-    commonPeopleFile = "inputGraphs/inputScheduling/lecture_lecture_commstudno_commprofno.csv",
-    lectureSizeFile = "inputGraphs/inputScheduling/lecture_studno_profno.csv",
-    roomsFile = "inputGraphs/inputScheduling/rooms.csv",
+    commonPeopleFile = "inputScheduling/lecture_lecture_commstudno_commprofno.csv",
+    lectureSizeFile = "inputScheduling/lecture_studno_profno.csv",
+    roomsFile = "inputScheduling/rooms.csv",
     minOccupationRate = 0.03).
     build(GraphBuilder.withConsole(false))
   println("Executing")
