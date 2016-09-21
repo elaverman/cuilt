@@ -24,3 +24,19 @@ inputGraphs/*
 *.snapshot
 
 *.hprof
+
+inputScheduling/lecture_lecture_commstudno_commprofno.csv
+
+inputScheduling/lecture_studno_profno.csv
+
+inputScheduling/sample.csv
+
+inputScheduling/source files/Raumliste Irchel FS 2016.xls
+
+inputScheduling/source files/Raumliste Oelikon FS 2016.xls
+
+inputScheduling/source files/Raumliste Zentrum FS 2016.xls
+
+inputScheduling/source files/all_rooms.csv
+
+inputScheduling/rooms.csv
