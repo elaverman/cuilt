@@ -73,10 +73,16 @@ trait EventUtility extends IntAlgorithm with StateWithParticipants {
 
   def computeUtility(c: State) = {
     val neighboringEvents = c.neighborActions.filter(_._1 % 2 == 0)
-    val neighboringSlots = c.neighborActions.filter(_._1 % 2 == 1)
 
-    neighboringSlots.map(x => computeSlotUtility(c, x)).sum +
-      neighboringEvents.map(x => computeEventUtility(c, x)).sum
+    // Hard constraint for professors.
+    if (neighboringEvents.map(x => computeProfUtility(c, x)).product == 0) {
+      0
+    } else {
+      val neighboringSlots = c.neighborActions.filter(_._1 % 2 == 1)
+
+      neighboringSlots.map(x => computeSlotUtility(c, x)).sum +
+        neighboringEvents.map(x => computeStudentUtility(c, x)).sum
+    }
   }
 
   def computeSlotUtility(c: State, slot: (AgentId, Action)): Double = {
@@ -95,17 +101,15 @@ trait EventUtility extends IntAlgorithm with StateWithParticipants {
     }
   }
 
-  def computeEventUtility(c: State, event: (AgentId, Action)): Double = {
+  def computeProfUtility(c: State, event: (AgentId, Action)): Double = {
+    val commonProfs = c.commonParticipants.getOrElse(event._1, (0, 0))._1
+    if (commonProfs != 0 && isSameTime(c.centralVariableValue, event._2)) 0 else 1
+  }
+
+  def computeStudentUtility(c: State, event: (AgentId, Action)): Double = {
     // If the events happen during the same time slot and they have common participants
-    val participants = c.commonParticipants.getOrElse(event._1, (0, 0))
-    if (isSameTime(c.centralVariableValue, event._2) && participants != (0, 0)) {
-      val professors = participants._1
-      val students = participants._2
-      // TODO: Change into hard constraint for professors.
-      -professors - students
-    } else {
-      0.0
-    }
+    val commonStud = c.commonParticipants.getOrElse(event._1, (0, 0))._2
+    if (isSameTime(c.centralVariableValue, event._2)) 0 else commonStud
   }
 
   // Slot Id is (Room*100+TimeSlot)*2+1
