@@ -151,7 +151,7 @@ trait SimpleMemoryState extends StateWithMemory {
     }
 
     override def toString = {
-      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+      s"SimpleMemoryStateImplementation: agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
     }
   }
 }
@@ -189,12 +189,23 @@ trait SimpleNumberOfCollectsState extends StateWithMemory {
     }
 
     override def toString = {
-      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
+      s"SimpleNumberOfCollectsStateImplementation agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects"
     }
   }
 }
 
-trait ExtendedMemoryState extends StateWithMemory {
+trait StateWithExtendedMemory extends StateWithMemory {
+  type State <: StateWithExtendedMemoryInterface
+
+  trait StateWithExtendedMemoryInterface extends StateWithMemoryInterface {
+    def memory: Map[Action, UtilityType]
+    def numberOfCollects: Long //to rename to numberOfUpdates and check
+    def memoryConverged: Boolean
+    def withUpdatedMemory(newMemory: Map[Action, UtilityType]): this.type
+  }
+}
+
+trait ExtendedMemoryState extends StateWithExtendedMemory {
   type State = ExtendedMemoryStateImplementation
 
   def computeExpectedUtilities(c: State): Map[Action, UtilityType]
@@ -227,7 +238,7 @@ trait ExtendedMemoryState extends StateWithMemory {
     neighborActions: Map[AgentId, Action],
     memory: Map[Action, UtilityType],
     numberOfCollects: Long, //TODO: rename to numberOfUpdates and check
-    memoryConverged: Boolean) extends StateWithMemoryInterface {
+    memoryConverged: Boolean) extends StateWithExtendedMemoryInterface {
 
     def withCentralVariableAssignment(value: Action) = {
       this.copy(centralVariableValue = value).asInstanceOf[this.type]
@@ -278,7 +289,7 @@ trait ExtendedMemoryState extends StateWithMemory {
     }
 
     override def toString = {
-      s"agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects, memoryConverged $memoryConverged"
+      s"ExtendedMemoryStateImplementation agentId $agentId, value $centralVariableValue, memory $memory, neighbors $neighborActions, collects $numberOfCollects, memoryConverged $memoryConverged"
     }
   }
 }

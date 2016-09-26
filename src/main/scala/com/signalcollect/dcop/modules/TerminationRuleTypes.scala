@@ -50,7 +50,7 @@ trait SimulatedAnnealingConvergence extends TerminationRule with StateWithMemory
 
 }
 
-trait DistributionConvergence extends TerminationRule with ExtendedMemoryState {
+trait DistributionConvergence extends TerminationRule with StateWithExtendedMemory {
 
   def shouldTerminate(c: State): Boolean = {
 
