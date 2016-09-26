@@ -39,8 +39,8 @@ case class GridGeneratorRun(
   adoptGraphFormat: Boolean) extends Serializable {
 
   val numberOfVertices = width * width
-  val edgeCounter = (width - 2) * 8 + (width - 2) * 4 * 5 + 4 * 3
-  val edgeDensity = math.floor(edgeCounter / numberOfVertices * 100) / 100
+  val edgeCounter = (width - 2) * (width - 2) * 8 + (width - 2) * 4 * 5 + 4 * 3
+  val edgeDensity = math.floor((edgeCounter/2).toDouble / numberOfVertices * 100) / 100
 
   val v = new Array[Int](numberOfVertices)
   val e = new Array[List[Int]](numberOfVertices)
@@ -86,7 +86,7 @@ case class GridGeneratorRun(
 
   def writeStdFormat() = {
     val targetFile = new java.io.FileWriter(fileName)
-    targetFile.write(numberOfVertices + " " + edgeCounter + " " + edgeDensity + " " + numberOfColors + "\n")
+    targetFile.write(numberOfVertices + " " + edgeCounter/2 + " " + edgeDensity + " " + numberOfColors + "\n")
     for (i <- 0 until numberOfVertices) {
       for (j <- computeNeighbours(i)) {
         if (i < j) { //No self edges, no double edges (will be added automatically by the reader).
