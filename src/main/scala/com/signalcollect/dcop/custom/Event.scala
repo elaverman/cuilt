@@ -21,68 +21,26 @@ package com.signalcollect.dcop.custom
 import com.signalcollect.dcop.modules.StateModule
 import com.signalcollect.dcop.modules.IntAlgorithm
 
-/**
- * State definitions for Event agent.
- * Differs from SimpleState because it needs the set of participants.
- *
- * TODO: Add more complex states (memory etc.).
- */
-trait StateWithParticipants extends StateModule {
-  type State <: StateWithParticipantsInterface
-
-  trait StateWithParticipantsInterface extends StateInterface {
-    // Number of participants in common with another event. 
-    def commonParticipants: Map[Int, (Int, Int)]
-  }
-}
-
-trait EventState extends StateWithParticipants {
-
-  type State = EventStateImplementation
-
-  def createInitialState(id: AgentId, action: Action, domain: Set[Action], extraInfo: Option[Any]): State = {
-    val commonParticipants = extraInfo match {
-      case Some(commonParticipantsInfo: scala.collection.mutable.Map[Int, (Int, Int)]) => commonParticipantsInfo
-      case None => scala.collection.mutable.Map.empty[Int, (Int, Int)]
-    }
-    EventStateImplementation(
-      agentId = id,
-      centralVariableValue = action,
-      domain = domain,
-      neighborActions = Map.empty[AgentId, Action].withDefaultValue(domain.head),
-      commonParticipants = commonParticipants.toMap)
-  }
-
-  case class EventStateImplementation(
-    agentId: AgentId,
-    centralVariableValue: Action,
-    domain: Set[Action],
-    neighborActions: Map[AgentId, Action],
-    commonParticipants: Map[Int, (Int, Int)]) extends StateWithParticipantsInterface {
-
-    def withCentralVariableAssignment(value: Action) = {
-      this.copy(centralVariableValue = value).asInstanceOf[this.type]
-    }
-    def withUpdatedNeighborActions(newNeighborActions: Map[AgentId, Action]) = {
-      this.copy(neighborActions = newNeighborActions).asInstanceOf[this.type]
-    }
-  }
-}
-
 trait EventUtility extends IntAlgorithm with StateWithParticipants {
 
   def computeUtility(c: State) = {
     val neighboringEvents = c.neighborActions.filter(_._1 % 2 == 0)
-
+    val neighboringSlots = c.neighborActions.filter(_._1 % 2 == 1)
+    val utilSlot = neighboringSlots.map(x => computeSlotUtility(c, x)).sum
+    val utilEvents = neighboringEvents.map(x => computeStudentUtility(c, x)).sum
+    val utilProf = neighboringEvents.map(x => computeProfUtility(c, x)).product
     // Hard constraint for professors.
-    if (neighboringEvents.map(x => computeProfUtility(c, x)).product == 0) {
-      0
-    } else {
-      val neighboringSlots = c.neighborActions.filter(_._1 % 2 == 1)
-
-      neighboringSlots.map(x => computeSlotUtility(c, x)).sum +
-        neighboringEvents.map(x => computeStudentUtility(c, x)).sum
-    }
+    val util =
+      if (utilProf == 0) {
+        0
+      } else {
+        utilSlot + utilEvents
+        //neighboringSlots.map(x => computeSlotUtility(c, x)).sum +
+        //neighboringEvents.map(x => computeStudentUtility(c, x)).sum
+      }
+    /*println("util for " + c.agentId + " " + c.centralVariableValue + " is " + util + " " + neighboringEvents + """
+""" + neighboringSlots + " " + utilEvents + " " + utilSlot + " " + utilProf)
+    */ util
   }
 
   def computeSlotUtility(c: State, slot: (AgentId, Action)): Double = {
@@ -102,13 +60,13 @@ trait EventUtility extends IntAlgorithm with StateWithParticipants {
   }
 
   def computeProfUtility(c: State, event: (AgentId, Action)): Double = {
-    val commonProfs = c.commonParticipants.getOrElse(event._1, (0, 0))._1
+    val commonProfs = c.commonParticipants.getOrElse(event._1, (0, 0))._2
     if (commonProfs != 0 && isSameTime(c.centralVariableValue, event._2)) 0 else 1
   }
 
   def computeStudentUtility(c: State, event: (AgentId, Action)): Double = {
     // If the events happen during the same time slot and they have common participants
-    val commonStud = c.commonParticipants.getOrElse(event._1, (0, 0))._2
+    val commonStud = c.commonParticipants.getOrElse(event._1, (0, 0))._1
     if (isSameTime(c.centralVariableValue, event._2)) 0 else commonStud
   }
 
