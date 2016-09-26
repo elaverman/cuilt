@@ -30,6 +30,7 @@ import com.signalcollect.dcop.modules.SignalCollectAlgorithmBridge
 
 trait GraphInstantiator extends Serializable {
   def build(graphBuilder: GraphBuilder[Any, Any]): Graph[Any, Any]
+  def maxUtility: Double
 }
 
 //TODO: Decouple the functions for building vertices/edges from the algorithm. Add pluggable function for action initialization.
