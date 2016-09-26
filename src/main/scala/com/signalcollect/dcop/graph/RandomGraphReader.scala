@@ -32,14 +32,24 @@ import java.io.FileReader
 class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity: Double, numberOfColors: Int, graphNumber: Int) extends GraphInstantiator {
 
   def build(graphBuilder: GraphBuilder[Any, Any] = GraphBuilder): Graph[Any, Any] = {
+    
+    val edgeDensityString = if (edgeDensity == edgeDensity.toInt) {
+      edgeDensity.toInt.toString
+      } else { ((edgeDensity*100).toInt/100.0).toString}
 
-    val inputFileName:String = s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensity}_Col${numberOfColors}_${graphNumber}.txt"
+    println("ED:"+edgeDensityString)
+    val inputFileName:String = s"inputGraphsCP/V${numberOfVertices}_ED${edgeDensityString}_Col${numberOfColors}_${graphNumber}.txt"
     val sourceFile = new java.io.File(inputFileName)
     val br = new BufferedReader(new FileReader(sourceFile));
 
-    val Array(contentNumberOfVertices, contentNumberOfEdges, contentEdgeDensity, contentNumberOfColors) = br.readLine().split(" ").map(_.toInt)
+    val Array(contentNumberOfVertices, contentNumberOfEdges, contentEdgeDensity, contentNumberOfColors) = br.readLine().split(" ")
     val domain = (0 until numberOfColors).toSet
 
+    assert(contentNumberOfVertices.toInt == numberOfVertices, "Number of vertices from file name and file differ")
+    assert(contentEdgeDensity == edgeDensityString, "Edge densities from file name and file differ")
+    assert(contentNumberOfColors.toInt == numberOfColors, "Number of colors from file name and file differ")
+    
+    
     def randomFromDomain = domain.toSeq(Random.nextInt(domain.size))
 
     val g = graphBuilder.build
@@ -50,7 +60,7 @@ class RandomGraphReader(myAlgo: IntAlgorithm, numberOfVertices: Int, edgeDensity
     }
 
     //Add edges
-    for (i <- 0 until contentNumberOfEdges) {
+    for (i <- 0 until contentNumberOfEdges.toInt) {
       val Array(src, trg) = br.readLine().split(" ").map(_.toInt)
       g.addEdge(src, myAlgo.createEdge(targetId = trg))
       g.addEdge(trg, myAlgo.createEdge(targetId = src))
