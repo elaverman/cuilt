@@ -13,6 +13,8 @@ The package offers a modular framework for developing iterative approximate best
 - JSFP-I (Joint Strategy Fictitious Play with Inertia) [4]
 - WRM-I (Weighted Regret Monitoring with Inertia) [1,5]
 
+The research based on the Cuilt framework is published in a short [6] and long [7] form. Further research that explores combining algorithms with rank information based on a modification of the PageRank algorithm [8] is detailed in two more publications [9,10].
+
 Usage
 -------------------------------------
 Ensure Java 8 is used for the compilation and install SBT, as described in the README file of the "signal-collect" project.
@@ -40,3 +42,9 @@ Bibliography:
 - [3] Zhang, Wang, Wittenburg, 2002. "Distributed stochastic search for constraint satisfaction and optimization: Parallelism, phase transitions and performance", In Proceedings  of AAAI-02 Workshop on Probabilistic Approaches in Search, 2002, pp. 53–59
 - [4] Marden, Jason R., Gürdal Arslan, and Jeff S. Shamma. "Joint strategy fictitious play with inertia for potential games." Automatic Control, IEEE Transactions on 54.2 (2009): 208-220.
 - [5] Arslan, G., Marden, J. R. & Shamma, J. S. 2007. "Autonomous vehicle-target assignment: a game theoretical formulation". ASME Journal of Dynamic Systems, Measurement and Control 129, 584–596.
+- [6] C.M. Verman, Philip Stutz, Robin Hafen, Abraham Bernstein (2016). "Cuilt: a Scalable, Mix-and-Match Framework for Local Iterative Approximate Best-Response Algorithms", In: 22nd European Conference on Artificial Intelligence, IOS Press Ebooks.
+- [7] C.M. Verman, Philip Stutz, Robin Hafen, Abraham Bernstein (2016). "Exploring Hybrid Iterative Approximate Best-Response Algorithms for Solving DCOPs", In: International Workshop on Optimisation in Multi-agent Systems
+- [8] Page, L., Brin, S., Motwani, R., & Winograd, T. (1999). "The PageRank citation ranking: Bringing order to the web", In: Stanford InfoLab.
+- [9] Andreas Flückiger, C.M. Verman, Abraham Bernstein (2016). "Improving Approximate Algorithms for DCOPs Using Ranks", In: International Workshop on Optimisation in Multi-Agent Systems
+- [10] C.M. Verman, Philip Stutz, Abraham Bernstein (2014). "Solving Distributed Constraint Optimization Problems Using Ranks", In: Statistical Relational AI. Papers Presented at the Twenty-Eighth AAAI Conference on Artificial Intelligence, AAAI Press, Palo Alto, California.
+
